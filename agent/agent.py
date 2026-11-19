@@ -32,7 +32,7 @@ import sensors
 import tools
 import winapi
 
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 IS_WIN = sys.platform == "win32"
 NO_WINDOW = 0x08000000 if IS_WIN else 0
 FROZEN = bool(getattr(sys, "frozen", False))
@@ -177,8 +177,9 @@ class UsageStore:
 # --------------------------------------------------------------------------- agent
 
 class Agent:
-    def __init__(self, cfg: dict):
+    def __init__(self, cfg: dict, lock_sock=None):
         self.cfg = cfg
+        self.lock_sock = lock_sock
         self.server = cloud.SUPABASE_URL
         self.token = cfg["token"]
         self.settings: dict = cfg.get("settings") or {}
@@ -249,7 +250,43 @@ class Agent:
         return default if v is None else v
 
     # ------------------------------------------------------------- sensorlar va snapshot
+    def ensure_pawnio(self):
+        """Harorat/kuchlanish/fan sensorlari uchun PawnIO kerak — yoʻq boʻlsa, sensorlar ochilishidan oldin oʻrnatamiz."""
+        if not (IS_WIN and self.pawnio is False and tools.pawnio_installer() and winapi.is_admin()):
+            return
+        if self.cfg.get("pawnio_auto") is False:
+            return
+        log.info("PawnIO oʻrnatilmoqda...")
+        ok, msg = tools.install_pawnio()
+        self.pawnio = tools.pawnio_installed()
+        if ok:
+            log.info("PawnIO oʻrnatildi")
+            self.post_event("ok", "Harorat sensorlari yoqildi", "PawnIO drayveri oʻrnatildi — CPU harorati, kuchlanish va fanlar endi koʻrinadi", push=False)
+        else:
+            log.warning("PawnIO oʻrnatilmadi: %s", msg)
+
+    def restart(self):
+        """Agentni qayta ishga tushirish (yangi drayver/kutubxonani toza yuklash uchun)."""
+        log.info("agent qayta ishga tushirilmoqda")
+        self.running = False
+        try:
+            self.usage.save()
+        except Exception:
+            pass
+        try:
+            if self.source:
+                self.source.close()
+        except Exception:
+            pass
+        if self.lock_sock:
+            self.lock_sock.close()
+        args = [sys.executable] if FROZEN else [sys.executable, os.path.abspath(__file__)]
+        flags = 0x00000008 | 0x00000200 if IS_WIN else 0
+        subprocess.Popen(args + ["--restarted"], creationflags=flags, close_fds=True)
+        os._exit(0)
+
     def collector_loop(self):
+        self.ensure_pawnio()
         self.source, self.lhm_error = sensors.open_source(LHM_DIR, self.cfg.get("sensor_source", "auto"))
         log.info("sensor manbasi: %s%s", self.source.name, f" ({self.lhm_error})" if self.lhm_error else "")
         psutil.cpu_percent(None)
@@ -716,6 +753,19 @@ class Agent:
         if cmd == "sync":
             self.wake.set()
             return {"done": True}
+        if cmd == "install_pawnio":
+            if tools.pawnio_installed():
+                threading.Timer(2, self.restart).start()
+                return {"installed": True, "restarting": True}
+            ok, msg = tools.install_pawnio()
+            if not ok:
+                raise ValueError(msg)
+            self.pawnio = True
+            threading.Timer(2, self.restart).start()  # LibreHardwareMonitor drayverni qayta ochishi uchun
+            return {"installed": True, "restarting": True}
+        if cmd == "restart_agent":
+            threading.Timer(1.5, self.restart).start()
+            return {"restarting": True}
         if cmd == "wol":
             tools.send_magic_packet(str(a.get("mac")), a.get("broadcast"), int(a.get("port") or 9))
             return {"done": True}
@@ -774,7 +824,8 @@ class Agent:
             "settings_ver": self.settings_ver, "agent": VERSION,
             "caps": {"power": IS_WIN, "lock": IS_WIN, "guard": IS_WIN, "usage": IS_WIN, "media": IS_WIN, "startup": IS_WIN,
                      "cleanup": IS_WIN, "message": True, "screenshot": self.has_pil and IS_WIN,
-                     "fans": bool(self.source and self.source.name == "lhm"), "admin": winapi.is_admin()},
+                     "fans": bool(self.source and self.source.name == "lhm"), "admin": winapi.is_admin(),
+                     "pawnio_install": bool(IS_WIN and tools.pawnio_installer())},
         })
         return snap
 
@@ -1038,6 +1089,13 @@ def manage_flow(cfg: dict | None) -> None:
             else:
                 spawn_detached(sys.executable)
             gui.info("PC Pulse", "Kompyuter qayta ulandi va agent ishga tushdi.")
+    elif action == "restart":
+        stop_other_instances()
+        if IS_WIN and FROZEN and task_exists():
+            start_task()
+        else:
+            spawn_detached(sys.executable)
+        gui.info("PC Pulse", "Agent qayta ishga tushirildi.")
     elif action == "update":
         ok, msg = install_and_start()
         gui.info("PC Pulse", "Yangilandi va qayta ishga tushirildi." if ok else f"Yangilab boʻlmadi: {msg}")
@@ -1068,7 +1126,7 @@ def selftest(path: str) -> int:
     import platform
     import traceback
 
-    res: dict = {"version": VERSION, "frozen": FROZEN, "python": platform.python_version(), "lhm_dir": LHM_DIR, "admin": winapi.is_admin()}
+    res: dict = {"pawnio_installer": tools.pawnio_installer(), "pawnio_installed": tools.pawnio_installed(), "version": VERSION, "frozen": FROZEN, "python": platform.python_version(), "lhm_dir": LHM_DIR, "admin": winapi.is_admin()}
     try:
         res["lhm_files"] = sorted(os.listdir(LHM_DIR))[:40]
     except Exception as e:
@@ -1143,6 +1201,7 @@ def main():
     ap.add_argument("--version", action="store_true")
     ap.add_argument("--sensor-source", choices=["auto", "lhm", "lhm-http", "basic"])
     ap.add_argument("--debug", action="store_true")
+    ap.add_argument("--restarted", action="store_true", help=argparse.SUPPRESS)
     args, _ = ap.parse_known_args()
     if sys.stdout and hasattr(sys.stdout, "reconfigure"):
         try:
@@ -1164,6 +1223,12 @@ def main():
         return
 
     lock = bind_lock()
+    if lock is None and args.restarted:  # oldingi nusxa yopilishini kutamiz
+        for _ in range(40):
+            time.sleep(0.5)
+            lock = bind_lock()
+            if lock:
+                break
     if lock is None:  # boshqa nusxa allaqachon ishlayapti
         if gui.available():
             manage_flow(cfg)
@@ -1182,7 +1247,7 @@ def main():
             if not res:
                 return
             cfg = load_config()
-            if IS_WIN and tools.pawnio_installed() is False:
+            if IS_WIN and tools.pawnio_installed() is False and not tools.pawnio_installer():
                 if gui.ask("PC Pulse", "Harorat, PSU kuchlanishi va fanlarni koʻrish uchun bepul PawnIO drayveri kerak.\n\n"
                                        "Yuklab olish sahifasini ochaymi? (PawnIO_setup.exe ni oʻrnatib, kompyuterni qayta ishga tushiring)"):
                     import webbrowser
@@ -1209,7 +1274,7 @@ def main():
         save_config(cfg)
     if IS_WIN and not winapi.is_admin():
         log.warning("Administrator huquqi yoʻq — harorat/kuchlanish/fan sensorlari va fan boshqaruvi cheklangan boʻladi.")
-    Agent(cfg).run()
+    Agent(cfg, lock).run()
 
 
 if __name__ == "__main__":

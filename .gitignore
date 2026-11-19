@@ -8,3 +8,4 @@ agent/lhm/*
 !agent/lhm/README.txt
 .env
 .DS_Store
+agent/pawnio/

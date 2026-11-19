@@ -41,12 +41,24 @@ jobs:
           if ($dll.DirectoryName -ne $root) { Move-Item "$($dll.DirectoryName)\*" $root -Force }
           Get-ChildItem agent/lhm -Name
 
+      - name: PawnIO oʻrnatuvchisini yuklab olish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $rel = Invoke-RestMethod -Headers @{ Authorization = "Bearer $env:GH_TOKEN" } https://api.github.com/repos/namazso/PawnIO.Setup/releases/latest
+          $asset = $rel.assets | Where-Object { $_.name -ieq 'PawnIO_setup.exe' } | Select-Object -First 1
+          if (-not $asset) { throw "PawnIO_setup.exe topilmadi: $($rel.assets.name -join ', ')" }
+          New-Item -ItemType Directory -Force agent/pawnio | Out-Null
+          Invoke-WebRequest $asset.browser_download_url -OutFile agent/pawnio/PawnIO_setup.exe
+          Write-Host "PawnIO $($rel.tag_name): $((Get-Item agent/pawnio/PawnIO_setup.exe).Length) bayt"
+
       - name: PCPulseAgent.exe ni yigʻish
         working-directory: agent
         run: >
           pyinstaller --noconfirm --clean --onefile --windowed --uac-admin
           --name PCPulseAgent --icon assets/icon.ico
-          --add-data "lhm;lhm" --add-data "assets;assets"
+          --add-data "lhm;lhm" --add-data "pawnio;pawnio" --add-data "assets;assets"
           --collect-all pythonnet --collect-all clr_loader --hidden-import clr
           agent.py
 
@@ -69,8 +81,8 @@ jobs:
       - name: Reliz
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: agent-v2.0.${{ github.run_number }}
-          name: PC Pulse agent 2.0.${{ github.run_number }}
+          tag_name: agent-v2.1.${{ github.run_number }}
+          name: PC Pulse agent 2.1.${{ github.run_number }}
           make_latest: true
           files: |
             agent/dist/PCPulseAgent.exe
@@ -81,5 +93,8 @@ jobs:
             1. Yuklab oling va ishga tushiring (Windows ruxsat soʻraganda “Ha”).
             2. SmartScreen chiqsa: “More info” → “Run anyway” (dastur imzolanmagan).
             3. Saytdagi username va parol bilan kiring — tamom.
+            4. Harorat sensorlari uchun PawnIO drayveri agent tomonidan avtomatik oʻrnatiladi.
+
+            Eski versiya ishlayotgan boʻlsa: yangi faylni ishga tushiring → “Shu faylni oʻrnatish (yangilash)”.
 
             Sayt: https://typime.github.io/pcpulse/

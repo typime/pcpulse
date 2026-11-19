@@ -297,3 +297,26 @@ def pawnio_installed() -> bool | None:
             return True
     except OSError:
         return False
+
+
+def pawnio_installer() -> str | None:
+    """PCPulseAgent.exe ichiga joylangan PawnIO oʻrnatuvchisi (GitHub Actions qoʻshadi)."""
+    import sys as _sys
+    base = getattr(_sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    p = os.path.join(base, "pawnio", "PawnIO_setup.exe")
+    return p if os.path.exists(p) else None
+
+
+def install_pawnio(timeout: int = 180) -> tuple[bool, str]:
+    """PawnIO drayverini jim rejimda oʻrnatadi (administrator huquqi kerak)."""
+    if not IS_WIN:
+        return False, "Faqat Windows da"
+    exe = pawnio_installer()
+    if not exe:
+        return False, "PawnIO oʻrnatuvchisi topilmadi"
+    try:
+        r = subprocess.run([exe, "-install", "-silent"], capture_output=True, timeout=timeout, creationflags=NO_WINDOW)
+    except Exception as e:
+        return False, f"Ishga tushmadi: {e}"
+    ok = pawnio_installed() is True
+    return ok, "" if ok else f"Oʻrnatilmadi (kod {r.returncode})"

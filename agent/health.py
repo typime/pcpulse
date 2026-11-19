@@ -222,7 +222,7 @@ def analyze(snap: dict, sysinfo: dict | None, alerts: dict) -> dict:
     if snap.get("pawnio") is False and snap.get("source") == "lhm":
         add("pawnio", "info", "system", "PawnIO drayveri oʻrnatilmagan",
             "CPU harorati, PSU kuchlanishi va fanlar toʻliq koʻrinmasligi mumkin",
-            "github.com/namazso/PawnIO.Setup dan PawnIO_setup.exe ni oʻrnatib, kompyuterni qayta ishga tushiring.")
+            "Tizim boʻlimidagi “Drayverni oʻrnatish” tugmasini bosing — agent uni oʻzi oʻrnatadi.")
     if snap.get("source") == "basic":
         add("sensors", "info", "system", "Sensorlar cheklangan rejimda",
             "Harorat, kuchlanish va fanlar koʻrinmayapti",

@@ -129,7 +129,7 @@ def manage_window(name: str, username: str, web_url: str, can_update: bool) -> s
     """Agent allaqachon ishlayotganda koʻrsatiladi. Tanlangan amal nomini qaytaradi."""
     import tkinter as tk
 
-    root = _root("PC Pulse", 400, 400 if can_update else 350)
+    root = _root("PC Pulse", 400, 450 if can_update else 400)
     f = tk.Frame(root, bg=BG, padx=26, pady=22)
     f.pack(fill="both", expand=True)
     tk.Label(f, text="PC Pulse agent ishlayapti", bg=BG, fg=FG, font=(FONT, 15, "bold")).pack(anchor="w")
@@ -140,7 +140,8 @@ def manage_window(name: str, username: str, web_url: str, can_update: bool) -> s
         choice["v"] = v
         root.destroy()
 
-    items = [("open", "Saytni ochish", True), ("repair", "Qayta ulash (boshqa akkaunt)", False)]
+    items = [("open", "Saytni ochish", True), ("restart", "Agentni qayta ishga tushirish", False),
+             ("repair", "Qayta ulash (boshqa akkaunt)", False)]
     if can_update:
         items.append(("update", "Shu faylni oʻrnatish (yangilash)", False))
     items += [("remove", "Toʻxtatish va avtoyuklanishdan olib tashlash", False), (None, "Yopish", False)]

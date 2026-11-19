@@ -152,7 +152,7 @@ function toast(text, kind = "") {
   setTimeout(() => { S.toasts = S.toasts.filter((t) => t.id !== id); render(); }, 3800);
 }
 
-const SLOW = { screenshot: 30, cleanup_run: 120, cleanup_scan: 60, startup_list: 25, sensors: 25, procs: 20 };
+const SLOW = { install_pawnio: 200, screenshot: 30, cleanup_run: 120, cleanup_scan: 60, startup_list: 25, sensors: 25, procs: 20 };
 async function runCommand(name, args) {
   const { id } = await rpc("pp_command", { p_device: S.devId, p_cmd: name, p_args: args });
   const until = Date.now() + (SLOW[name] || 20) * 1000;
@@ -419,7 +419,7 @@ function overviewView() {
     ["Ishlash vaqti", fmtUptime(L.uptime), L.fg ? `Hozir: ${esc(L.fg.name)}` : L.locked ? "Ekran qulflangan" : "&nbsp;"],
   ].map(([n, v, s]) => `<div class="g tile"><div class="name"><span>${n}</span></div><div class="mid">${v}</div><div class="sub">${s}</div></div>`).join("");
 
-  return `
+  return `${sourceNote()}
   <section class="g hero">
     <div><h1>${esc(lead)}</h1><p class="lead">${esc(h.summary.split(". ").slice(1).join(". ") || "")}</p></div>
     <div class="ringwrap">${ring(h.score, h.level, String(h.score))}</div>
@@ -484,8 +484,13 @@ function systemView() {
 function sourceNote() {
   const L = S.live;
   if (L && L.pawnio === false && L.source === "lhm") {
-    return `<div class="note">CPU harorati, PSU kuchlanishi va fanlar uchun kompyuterga bepul <b>PawnIO</b> drayverini oʻrnating, soʻng kompyuterni qayta ishga tushiring.
-      <div style="margin-top:8px"><a class="btn sm" href="https://github.com/namazso/PawnIO.Setup/releases/latest" target="_blank" rel="noopener">PawnIO ni yuklab olish</a></div></div>`;
+    const can = (L.caps || {}).pawnio_install && S.online;
+    return `<div class="note">Protsessor harorati, PSU kuchlanishi va korpus fanlari koʻrinmayapti: kompyuterda bepul <b>PawnIO</b> drayveri yoʻq.
+      ${can ? "Tugmani bosing — agent drayverni oʻzi oʻrnatadi va qayta ishga tushadi (20–30 soniya)." : "Agentning yangi versiyasini oʻrnating yoki drayverni qoʻlda oʻrnating."}
+      <div class="row" style="margin-top:10px">${can
+        ? `<button class="btn sm pri ${S.busy.install_pawnio ? "busy" : ""}" data-act="installPawnio">Drayverni oʻrnatish</button>`
+        : `<a class="btn sm" href="${esc(CFG.exeUrl || "#")}" target="_blank" rel="noopener">Yangi PCPulseAgent.exe</a>
+           <a class="btn sm ghost" href="https://github.com/namazso/PawnIO.Setup/releases/latest" target="_blank" rel="noopener">PawnIO (qoʻlda)</a>`}</div></div>`;
   }
   if (!L || L.source !== "basic") return "";
   return `<div class="note">Harorat, kuchlanish va fanlar koʻrinmayapti: sensorlar cheklangan rejimda.
@@ -985,6 +990,7 @@ const ACT = {
   devDelete: (el) => confirmBox(`${el.dataset.name} oʻchirilsinmi?`, "Qurilma va uning barcha tarixi (ekran vaqti, grafiklar) oʻchiriladi. Agentni qayta ulash mumkin.", "Oʻchirish", true, async () => {
     try { await rpc("pp_device_delete", { p_device: el.dataset.id }); toast("Qurilma oʻchirildi", "ok"); await loadDevices(); } catch (e) { toast(e.message, "err"); }
   }),
+  installPawnio: () => cmd("install_pawnio", {}, { ok: "Drayver oʻrnatildi — agent qayta ishga tushmoqda, 30 soniyada harorat koʻrinadi" }),
   shotFull: () => { S.modal = { kind: "image" }; render(); },
   logout: () => logout(),
   retry: () => tryResume(),
