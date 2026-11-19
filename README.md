@@ -27,7 +27,9 @@ Kompyuterni kuzatadigan va masofadan boshqaradigan ilova. Siz harorat, yuklama, 
    - **Android (Chrome):** menyu → *Ilovani oʻrnatish*.
    - **iPhone (iOS 16.4+):** Safari → Ulashish → *Ekranga qoʻshish*. Soʻng ilovani ochib, **Sozlamalar → Bildirishnomalar → Yoqish** ni bosing.
 
-> **Harorat, PSU kuchlanishi va fanlar** uchun bepul [PawnIO](https://github.com/namazso/PawnIO.Setup/releases/latest) drayveri kerak. Agent birinchi ishga tushganda uni oʻrnatishni taklif qiladi. Oʻrnatgandan keyin kompyuterni qayta ishga tushiring.
+> **Harorat, PSU kuchlanishi va fanlar** uchun bepul [PawnIO](https://github.com/namazso/PawnIO.Setup/releases/latest) drayveri kerak — agent uni oʻzi jim oʻrnatadi.
+>
+> **Yangilanish avtomatik:** agent 6 soatda bir yangi versiyani tekshiradi, yuklab oladi (SHA-256 bilan tekshirib) va oʻzini almashtiradi. Yangi versiya ishga tushmasa, oldingisi qaytariladi. Saytda “Hozir yangilash” tugmasi ham bor; sozlamalardan oʻchirish mumkin. Agent 2.0/2.1 oʻrnatilgan boʻlsa, yangi exe ni bir marta ishga tushiring — eskisini oʻzi almashtiradi.
 
 `PCPulseAgent.exe` ni qayta ochsangiz, boshqaruv oynasi chiqadi. Unda saytni ochish, boshqa akkauntga qayta ulash, yangi versiyani oʻrnatish yoki agentni toʻxtatib olib tashlash mumkin.
 
