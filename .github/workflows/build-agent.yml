@@ -1,0 +1,85 @@
+name: Windows agent (.exe)
+
+on:
+  push:
+    branches: [main]
+    paths: ["agent/**", ".github/workflows/build-agent.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Kutubxonalarni oʻrnatish
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r agent/requirements.txt pyinstaller
+
+      - name: LibreHardwareMonitor ni yuklab olish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $rel = Invoke-RestMethod -Headers @{ Authorization = "Bearer $env:GH_TOKEN" } https://api.github.com/repos/LibreHardwareMonitor/LibreHardwareMonitor/releases/latest
+          $asset = $rel.assets | Where-Object { $_.name -match '^LibreHardwareMonitor(-net472)?\.zip$' } | Select-Object -First 1
+          if (-not $asset) { $asset = $rel.assets | Where-Object { $_.name -like '*.zip' -and $_.name -notmatch 'NET\.?\d' } | Select-Object -First 1 }
+          Write-Host "LibreHardwareMonitor $($rel.tag_name): $($asset.name)"
+          Invoke-WebRequest $asset.browser_download_url -OutFile lhm.zip
+          Expand-Archive lhm.zip -DestinationPath agent/lhm -Force
+          $dll = Get-ChildItem agent/lhm -Recurse -Filter LibreHardwareMonitorLib.dll | Select-Object -First 1
+          if (-not $dll) { throw "LibreHardwareMonitorLib.dll topilmadi" }
+          $root = (Resolve-Path agent/lhm).Path
+          if ($dll.DirectoryName -ne $root) { Move-Item "$($dll.DirectoryName)\*" $root -Force }
+          Get-ChildItem agent/lhm -Name
+
+      - name: PCPulseAgent.exe ni yigʻish
+        working-directory: agent
+        run: >
+          pyinstaller --noconfirm --clean --onefile --windowed --uac-admin
+          --name PCPulseAgent --icon assets/icon.ico
+          --add-data "lhm;lhm" --add-data "assets;assets"
+          --collect-all pythonnet --collect-all clr_loader --hidden-import clr
+          agent.py
+
+      - name: Oʻz-oʻzini tekshirish
+        shell: pwsh
+        working-directory: agent
+        run: |
+          $p = Start-Process -FilePath dist\PCPulseAgent.exe -ArgumentList '--selftest', "$PWD\selftest.json" -Wait -PassThru
+          Get-Content selftest.json
+          Write-Host "exit code: $($p.ExitCode)"
+          if ($p.ExitCode -ne 0) { exit 1 }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PCPulseAgent
+          path: |
+            agent/dist/PCPulseAgent.exe
+            agent/selftest.json
+
+      - name: Reliz
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: agent-v2.0.${{ github.run_number }}
+          name: PC Pulse agent 2.0.${{ github.run_number }}
+          make_latest: true
+          files: |
+            agent/dist/PCPulseAgent.exe
+            agent/selftest.json
+          body: |
+            **PCPulseAgent.exe** — Windows 10/11 uchun.
+
+            1. Yuklab oling va ishga tushiring (Windows ruxsat soʻraganda “Ha”).
+            2. SmartScreen chiqsa: “More info” → “Run anyway” (dastur imzolanmagan).
+            3. Saytdagi username va parol bilan kiring — tamom.
+
+            Sayt: https://typime.github.io/pcpulse/

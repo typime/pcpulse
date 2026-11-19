@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+agent/build/
+agent/dist/
+agent/*.spec
+agent/selftest.json
+agent/lhm/*
+!agent/lhm/README.txt
+.env
+.DS_Store
