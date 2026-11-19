@@ -71,6 +71,19 @@ jobs:
           Write-Host "exit code: $($p.ExitCode)"
           if ($p.ExitCode -ne 0) { exit 1 }
 
+      - name: PawnIO jim oʻrnatilishini sinash
+        shell: pwsh
+        working-directory: agent
+        continue-on-error: true
+        run: |
+          $p = Start-Process -FilePath pawnio\PawnIO_setup.exe -ArgumentList '-install','-silent' -Wait -PassThru
+          $svc = (Get-ChildItem HKLM:\SYSTEM\CurrentControlSet\Services | Where-Object { $_.PSChildName -like '*awn*' } | ForEach-Object { $_.PSChildName }) -join ','
+          $info = [ordered]@{ installer_exit = $p.ExitCode; key_PawnIO = (Test-Path 'HKLM:\SYSTEM\CurrentControlSet\Services\PawnIO'); services = $svc; sc = (sc.exe query PawnIO | Out-String) }
+          $info | ConvertTo-Json | Out-File pawnio_test.json -Encoding utf8
+          Get-Content pawnio_test.json
+          $q = Start-Process -FilePath dist\PCPulseAgent.exe -ArgumentList '--selftest', "$PWD\selftest_after_pawnio.json" -Wait -PassThru
+          Get-Content selftest_after_pawnio.json
+
       - uses: actions/upload-artifact@v4
         with:
           name: PCPulseAgent
@@ -87,6 +100,8 @@ jobs:
           files: |
             agent/dist/PCPulseAgent.exe
             agent/selftest.json
+            agent/pawnio_test.json
+            agent/selftest_after_pawnio.json
           body: |
             **PCPulseAgent.exe** — Windows 10/11 uchun.
 
