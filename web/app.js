@@ -152,7 +152,7 @@ function toast(text, kind = "") {
   setTimeout(() => { S.toasts = S.toasts.filter((t) => t.id !== id); render(); }, 3800);
 }
 
-const SLOW = { install_pawnio: 200, screenshot: 30, cleanup_run: 120, cleanup_scan: 60, startup_list: 25, sensors: 25, procs: 20 };
+const SLOW = { install_pawnio: 200, update_agent: 40, screenshot: 30, cleanup_run: 120, cleanup_scan: 60, startup_list: 25, sensors: 25, procs: 20 };
 async function runCommand(name, args) {
   const { id } = await rpc("pp_command", { p_device: S.devId, p_cmd: name, p_args: args });
   const until = Date.now() + (SLOW[name] || 20) * 1000;
@@ -481,7 +481,34 @@ function systemView() {
   return seg + (k === "fans" ? fansView() : k === "power" ? powerView() : compView());
 }
 
+function agentNote() {
+  const L = S.live;
+  if (!L || !S.online) return "";
+  const caps = L.caps || {}, up = L.update || {};
+  if (caps.power && !caps.self_update) {  // 2.0 / 2.1: oʻzini yangilay olmaydi
+    return `<div class="note">Kompyuterdagi agent eski (${esc(L.agent || "?")}) va oʻzini yangilay olmaydi${L.pawnio === false ? " — protsessor harorati, kuchlanish va fanlar shuning uchun koʻrinmayapti" : ""}.
+      Yangi faylni <b>bir marta</b> yuklab, kompyuterda ishga tushiring va Windows soʻrasa “Ha” ni bosing — u eskisini oʻzi almashtiradi.
+      Keyingi yangilanishlar avtomatik keladi.
+      <div class="row" style="margin-top:10px"><a class="btn sm pri" href="${esc(CFG.exeUrl || "#")}" target="_blank" rel="noopener">Yangi PCPulseAgent.exe</a></div></div>`;
+  }
+  if (up.state === "downloading") return `<div class="note info">Agentning ${esc(up.latest || "yangi")} versiyasi yuklanmoqda${num(up.progress) ? ` — ${r0(up.progress)}%` : "…"}</div>`;
+  if (up.state === "installing") return `<div class="note info">Agent ${esc(up.latest || "")} versiyaga yangilanmoqda — 20–40 soniyada qayta ulanadi.</div>`;
+  if (up.available) {
+    return `<div class="note info">Agentning yangi versiyasi bor: <b>${esc(up.latest)}</b> (hozir ${esc(L.agent)}).
+      ${up.error ? `<div class="faint" style="margin-top:6px">${esc(up.error)}</div>` : ""}
+      <div class="row" style="margin-top:10px"><button class="btn sm pri ${S.busy.update_agent ? "busy" : ""}" data-act="updateAgent">Hozir yangilash</button></div></div>`;
+  }
+  return "";
+}
+
 function sourceNote() {
+  const L = S.live;
+  const an = agentNote();
+  if (an && L && !(L.caps || {}).self_update) return an;  // eski agent: bitta umumiy eslatma
+  return an + pawnioNote();
+}
+
+function pawnioNote() {
   const L = S.live;
   if (L && L.pawnio === false && L.source === "lhm") {
     const can = (L.caps || {}).pawnio_install && S.online;
@@ -551,9 +578,10 @@ function compView() {
       ["Tarmoq", esc(net.iface ? `${net.iface}${net.wifi ? " (Wi-Fi)" : ""}` : "")],
       ["Antivirus", si.defender ? (si.defender.rt ? "Defender yoniq" : "Defender real vaqt himoyasi oʻchiq") : null],
       ["Batareya", L.battery ? `${L.battery.percent}%${L.battery.plugged ? ", zaryadda" : ""}` : null],
-      ["Agent", `${esc(L.agent || "")} · sensorlar: ${esc(L.source)}${(L.caps || {}).admin ? "" : " · admin emas"}`],
+      ["Agent", `${esc(L.agent || "")}${(L.update || {}).available ? ` (yangi: ${esc(L.update.latest)})` : ""} · sensorlar: ${esc(L.source)}${(L.caps || {}).admin ? "" : " · admin emas"}`],
     ])}
-    <button class="btn sm" style="margin-top:14px" data-act="sensorsAll">${ic("list")}Barcha sensorlar</button></section>`;
+    <div class="row" style="margin-top:14px"><button class="btn sm" data-act="sensorsAll">${ic("list")}Barcha sensorlar</button>
+    ${(L.caps || {}).self_update && S.online ? `<button class="btn sm ghost ${S.busy.update_agent ? "busy" : ""}" data-act="updateAgent">Yangilanishni tekshirish</button>` : ""}</div></section>`;
 
   return `${sourceNote()}<div class="grid2">${cpuCard}${gpuCards}</div><div class="grid2">${ramCard}${diskCard}</div><div class="grid2">${mbCard}${osCard}</div>`;
 }
@@ -874,7 +902,8 @@ function settingsView() {
     <div class="setrow"><div><b>RAM bandligi</b><div class="sub">%</div></div>${numIn("ram", al.ram, 50, 100)}</div>
     <div class="setrow"><div><b>Disk toʻlishi</b><div class="sub">%</div></div>${numIn("disk", al.disk, 50, 100)}</div>
     ${S.dev ? `<div class="setrow"><div><b>Ekran vaqti: harakatsizlik chegarasi</b><div class="sub">${esc(S.dev.name)} uchun</div></div><select class="in" data-change="devSetting" data-k="idle_threshold_sec">${[[60, "1 daqiqa"], [120, "2 daqiqa"], [180, "3 daqiqa"], [300, "5 daqiqa"], [600, "10 daqiqa"]].map(([v, l]) => `<option value="${v}" ${Number(st.idle_threshold_sec || 180) === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>
-    <div class="setrow"><div><b>Fan minimal tezligi</b><div class="sub">Qoʻlda va harorat rejimlari uchun</div></div><select class="in" data-change="devSetting" data-k="fan_min_pct">${[[0, "0%"], [10, "10%"], [20, "20%"], [30, "30%"], [40, "40%"]].map(([v, l]) => `<option value="${v}" ${Number(st.fan_min_pct ?? 20) === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>` : ""}
+    <div class="setrow"><div><b>Fan minimal tezligi</b><div class="sub">Qoʻlda va harorat rejimlari uchun</div></div><select class="in" data-change="devSetting" data-k="fan_min_pct">${[[0, "0%"], [10, "10%"], [20, "20%"], [30, "30%"], [40, "40%"]].map(([v, l]) => `<option value="${v}" ${Number(st.fan_min_pct ?? 20) === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+    <div class="setrow"><div><b>Agentni avtomatik yangilash</b><div class="sub">Yangi versiya chiqqanda ${esc(S.dev.name)} oʻzini yangilaydi</div></div><label class="switch"><input type="checkbox" data-change="devSettingBool" data-k="auto_update" ${st.auto_update !== false ? "checked" : ""}><span></span></label></div>` : ""}
   </section>
   </div>
   <section class="g pad"><div class="row between"><h3 style="margin:0">Kompyuterlar</h3></div>
@@ -991,6 +1020,12 @@ const ACT = {
     try { await rpc("pp_device_delete", { p_device: el.dataset.id }); toast("Qurilma oʻchirildi", "ok"); await loadDevices(); } catch (e) { toast(e.message, "err"); }
   }),
   installPawnio: () => cmd("install_pawnio", {}, { ok: "Drayver oʻrnatildi — agent qayta ishga tushmoqda, 30 soniyada harorat koʻrinadi" }),
+  updateAgent: async () => {
+    try {
+      const r = await cmd("update_agent", {});
+      toast(r.latest ? `Agent eng soʻnggi versiyada (${r.version})` : `Yangilanmoqda: ${r.from} → ${r.version}. Agent bir daqiqada qayta ulanadi`, "ok");
+    } catch { /* xato toast qilingan */ }
+  },
   shotFull: () => { S.modal = { kind: "image" }; render(); },
   logout: () => logout(),
   retry: () => tryResume(),
@@ -1003,6 +1038,7 @@ const ACT = {
 const CHANGE = {
   device: (el) => selectDevice(el.value),
   devSetting: (el) => saveDevSettings({ [el.dataset.k]: Number(el.value) }),
+  devSettingBool: (el) => saveDevSettings({ [el.dataset.k]: el.checked }),
   fanValue: (el) => { const v = Number(el.value); delete S.form.fanDraft[el.dataset.id]; delete el.dataset.dragging; saveFan(el.dataset.id, { mode: "manual", value: v }); },
   fanPreset: (el) => saveFan(el.dataset.id, { mode: "curve", preset: el.value }),
   fanSource: (el) => saveFan(el.dataset.id, { mode: "curve", source: el.value }),

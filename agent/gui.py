@@ -151,6 +151,51 @@ def manage_window(name: str, username: str, web_url: str, can_update: bool) -> s
     return choice["v"]
 
 
+def busy_window(title: str, text: str, worker):
+    """worker() ni fon oqimida bajaradi va tugaguncha kichik “kuting” oynasini koʻrsatadi. worker natijasini qaytaradi."""
+    import tkinter as tk
+
+    out: dict = {}
+
+    def run():
+        try:
+            out["v"] = worker()
+        except Exception as e:  # noqa: BLE001
+            out["e"] = e
+
+    th = threading.Thread(target=run, daemon=True)
+    try:
+        root = _root(title, 380, 150)
+    except Exception:
+        run()
+        if "e" in out:
+            raise out["e"]
+        return out.get("v")
+    root.protocol("WM_DELETE_WINDOW", lambda: None)  # yarim yoʻlda yopilmasin
+    f = tk.Frame(root, bg=BG, padx=26, pady=24)
+    f.pack(fill="both", expand=True)
+    tk.Label(f, text=text, bg=BG, fg=FG, font=(FONT, 12, "bold"), justify="left").pack(anchor="w")
+    dots = tk.Label(f, text="", bg=BG, fg=ACCENT, font=(FONT, 16, "bold"))
+    dots.pack(anchor="w", pady=(10, 0))
+    n = {"i": 0}
+
+    def tick():
+        if not th.is_alive():
+            root.destroy()
+            return
+        n["i"] = (n["i"] + 1) % 4
+        dots.config(text="●" * n["i"] + "○" * (3 - n["i"]))
+        root.after(350, tick)
+
+    th.start()
+    root.after(100, tick)
+    root.mainloop()
+    th.join()
+    if "e" in out:
+        raise out["e"]
+    return out.get("v")
+
+
 def info(title: str, text: str) -> None:
     if sys.platform == "win32":
         import ctypes

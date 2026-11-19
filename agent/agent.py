@@ -30,9 +30,13 @@ import cloud
 import health
 import sensors
 import tools
+import updater
 import winapi
 
-VERSION = "2.1.0"
+try:
+    from build_info import VERSION  # CI yigʻishda yaratadi: 2.2.<build raqami>
+except ImportError:
+    VERSION = "2.2.0"
 IS_WIN = sys.platform == "win32"
 NO_WINDOW = 0x08000000 if IS_WIN else 0
 FROZEN = bool(getattr(sys, "frozen", False))
@@ -47,6 +51,11 @@ CONFIG_PATH = os.path.join(DATA_DIR, "config.json")
 USAGE_PATH = os.path.join(DATA_DIR, "usage.json")
 STOP_FLAG = os.path.join(DATA_DIR, "stop.flag")
 INSTALLED_EXE = os.path.join(DATA_DIR, "PCPulseAgent.exe")
+PREV_EXE = os.path.join(DATA_DIR, "PCPulseAgent.prev.exe")  # yangilanishdan oldingi nusxa (orqaga qaytarish uchun)
+UPDATE_DIR = os.path.join(DATA_DIR, "update")
+VERSION_FILE = os.path.join(DATA_DIR, "version.json")  # ishlab turgan agent versiyasi va pid
+UPDATE_STATE = os.path.join(DATA_DIR, "update_state.json")
+UA = f"PCPulseAgent/{VERSION}"
 TASK_NAME = "PC Pulse Agent"
 LHM_DIR = next((d for d in (os.path.join(RES_DIR, "lhm"), os.path.join(BASE, "lhm"))
                 if os.path.exists(os.path.join(d, "LibreHardwareMonitorLib.dll"))), os.path.join(RES_DIR, "lhm"))
@@ -81,7 +90,7 @@ def rpc(fn: str, params: dict, timeout: float = 20):
     """Supabase RPC chaqiruvi (PostgREST)."""
     data = json.dumps(params, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(f"{cloud.SUPABASE_URL}/rest/v1/rpc/{fn}", data=data, method="POST", headers={
-        "apikey": cloud.SUPABASE_KEY, "Content-Type": "application/json", "User-Agent": f"PCPulseAgent/{VERSION}"})
+        "apikey": cloud.SUPABASE_KEY, "Content-Type": "application/json", "User-Agent": UA})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             raw = r.read()
@@ -215,6 +224,9 @@ class Agent:
         self._io = None
         self._net = None
         self._vol_cache: tuple[float, list] = (0, [])
+        self.upd: dict = {"state": "idle"}
+        self.upd_lock = threading.Lock()
+        self.upd_wake = threading.Event()
         try:
             import PIL.ImageGrab  # noqa: F401
             self.has_pil = True
@@ -239,6 +251,8 @@ class Agent:
 
     # ------------------------------------------------------------- sozlamalar
     def apply_settings(self, settings: dict, ver: int):
+        if (settings or {}).get("auto_update", True) and not self.settings.get("auto_update", True):
+            self.upd_wake.set()  # avtomatik yangilash yoqildi — darhol tekshiramiz
         self.settings = settings or {}
         self.settings_ver = ver
         self.cfg["settings"], self.cfg["settings_ver"] = self.settings, ver
@@ -265,9 +279,8 @@ class Agent:
         else:
             log.warning("PawnIO oʻrnatilmadi: %s", msg)
 
-    def restart(self):
-        """Agentni qayta ishga tushirish (yangi drayver/kutubxonani toza yuklash uchun)."""
-        log.info("agent qayta ishga tushirilmoqda")
+    def _shutdown(self):
+        """Fayllarni saqlab, fanlarni BIOS ga qaytarib, qulfni boʻshatadi (jarayondan chiqishdan oldin)."""
         self.running = False
         try:
             self.usage.save()
@@ -279,11 +292,96 @@ class Agent:
         except Exception:
             pass
         if self.lock_sock:
-            self.lock_sock.close()
+            try:
+                self.lock_sock.close()
+            except Exception:
+                pass
+
+    def restart(self):
+        """Agentni qayta ishga tushirish (yangi drayver/kutubxonani toza yuklash uchun)."""
+        log.info("agent qayta ishga tushirilmoqda")
+        self._shutdown()
         args = [sys.executable] if FROZEN else [sys.executable, os.path.abspath(__file__)]
         flags = 0x00000008 | 0x00000200 if IS_WIN else 0
         subprocess.Popen(args + ["--restarted"], creationflags=flags, close_fds=True)
         os._exit(0)
+
+    # ------------------------------------------------------------- avtomatik yangilanish
+    def update_public(self) -> dict:
+        u = self.upd
+        return {k: u.get(k) for k in ("state", "latest", "available", "progress", "error", "checked")} | {"auto": bool(self.s("auto_update", True))}
+
+    def check_update(self) -> dict:
+        info = updater.fetch_latest(UA)
+        self.upd.update(latest=info["version"], available=updater.newer(info["version"], VERSION), checked=time.time(), error=None)
+        return info
+
+    def do_update(self, info: dict, reason: str) -> None:
+        if not self.upd_lock.acquire(blocking=False):
+            return
+        try:
+            log.info("yangilanish (%s): %s → %s", reason, VERSION, info["version"])
+            self.upd.update(state="downloading", progress=0, error=None)
+            self.wake.set()
+
+            def prog(got, total):
+                self.upd["progress"] = round(got * 100 / max(1, total))
+
+            path = updater.download(info, UPDATE_DIR, UA, progress=prog)
+            self.upd.update(state="installing", progress=100)
+            self.wake.set()
+            time.sleep(2)  # saytga “oʻrnatilmoqda” holati yetib borsin
+            write_json(UPDATE_STATE, {"from": VERSION, "to": info["version"], "ts": time.time(), "reason": reason, "pending": True})
+            flags = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+            subprocess.Popen([path, "--apply-update"], creationflags=flags, close_fds=True, cwd=UPDATE_DIR)
+            log.info("yangilovchi ishga tushdi — agent yopilmoqda")
+            self._shutdown()
+            os._exit(0)
+        except Exception as e:
+            log.warning("yangilab boʻlmadi: %s", e)
+            self.upd.update(state="error", error=str(e)[:200])
+            self.post_event("warn", "Agent yangilanmadi", str(e)[:200], push=False)
+            self.wake.set()
+        finally:
+            if self.upd_lock.locked():
+                self.upd_lock.release()
+
+    def report_update_result(self) -> None:
+        st = read_json(UPDATE_STATE)
+        if not st or st.get("reported") or st.get("pending") and st.get("to") != VERSION:
+            return
+        if st.get("ok") and st.get("to") == VERSION:
+            self.post_event("ok", "Agent yangilandi", f"{st.get('from') or 'eski versiya'} → {VERSION}", push=False)
+        elif st.get("ok") is False:
+            self.post_event("warn", "Yangilanish bekor qilindi", st.get("error") or "", push=False)
+            self.upd.update(state="error", error=st.get("error"))
+        else:
+            return
+        st["reported"] = True
+        write_json(UPDATE_STATE, st)
+
+    def update_loop(self):
+        if not (IS_WIN and FROZEN):
+            return
+        self.report_update_result()
+        for _ in range(90):  # ishga tushgandan keyin biroz kutamiz
+            if not self.running:
+                return
+            time.sleep(1)
+        updater.cleanup(UPDATE_DIR)
+        while self.running:
+            try:
+                info = self.check_update()
+                bad = read_json(UPDATE_STATE).get("bad")
+                if self.upd.get("available") and self.s("auto_update", True) and info["version"] != bad:
+                    self.do_update(info, "auto")
+                elif self.upd.get("state") == "error" and not self.upd.get("available"):
+                    self.upd["state"] = "idle"
+            except Exception as e:
+                self.upd["error"] = f"Tekshirib boʻlmadi: {e}"[:200]
+                log.info("yangilanish tekshiruvi: %s", e)
+            self.upd_wake.wait(6 * 3600 if not self.upd.get("error") else 3600)
+            self.upd_wake.clear()
 
     def collector_loop(self):
         self.ensure_pawnio()
@@ -763,6 +861,19 @@ class Agent:
             self.pawnio = True
             threading.Timer(2, self.restart).start()  # LibreHardwareMonitor drayverni qayta ochishi uchun
             return {"installed": True, "restarting": True}
+        if cmd == "update_agent":
+            if not (IS_WIN and FROZEN):
+                raise ValueError("Faqat Windows dagi PCPulseAgent.exe oʻzini yangilay oladi")
+            if self.upd.get("state") in ("downloading", "installing"):
+                return {"started": True, "version": self.upd.get("latest"), "from": VERSION}
+            try:
+                info = self.check_update()
+            except Exception as e:
+                raise ValueError(f"Yangilanishni tekshirib boʻlmadi: {e}") from e
+            if not self.upd.get("available") and not a.get("force"):
+                return {"latest": True, "version": VERSION}
+            threading.Thread(target=self.do_update, args=(info, "manual"), name="update", daemon=True).start()
+            return {"started": True, "version": info["version"], "from": VERSION}
         if cmd == "restart_agent":
             threading.Timer(1.5, self.restart).start()
             return {"restarting": True}
@@ -825,7 +936,8 @@ class Agent:
             "caps": {"power": IS_WIN, "lock": IS_WIN, "guard": IS_WIN, "usage": IS_WIN, "media": IS_WIN, "startup": IS_WIN,
                      "cleanup": IS_WIN, "message": True, "screenshot": self.has_pil and IS_WIN,
                      "fans": bool(self.source and self.source.name == "lhm"), "admin": winapi.is_admin(),
-                     "pawnio_install": bool(IS_WIN and tools.pawnio_installer())},
+                     "pawnio_install": bool(IS_WIN and tools.pawnio_installer()), "self_update": IS_WIN and FROZEN},
+            "update": self.update_public(),
         })
         return snap
 
@@ -907,7 +1019,8 @@ class Agent:
     # ------------------------------------------------------------- ishga tushirish
     def run(self):
         threads = [threading.Thread(target=f, name=f.__name__, daemon=True) for f in
-                   (self.collector_loop, self.sysinfo_loop, self.telemetry_loop, self.command_loop, self.tracker_loop, self.guard_loop, self.ping_loop)]
+                   (self.collector_loop, self.sysinfo_loop, self.telemetry_loop, self.command_loop, self.tracker_loop, self.guard_loop,
+                 self.ping_loop, self.update_loop)]
         for t in threads:
             t.start()
         log.info("PC Pulse agent %s ishlayapti → %s", VERSION, self.server)
@@ -1008,16 +1121,186 @@ def remove_autostart() -> None:
     ps_run(f"Unregister-ScheduledTask -TaskName '{TASK_NAME}' -Confirm:$false -ErrorAction SilentlyContinue")
 
 
+def read_json(path: str) -> dict:
+    try:
+        with open(path, encoding="utf-8") as f:
+            v = json.load(f)
+        return v if isinstance(v, dict) else {}
+    except Exception:
+        return {}
+
+
+def write_json(path: str, data: dict) -> None:
+    tmp = path + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False)
+        os.replace(tmp, path)
+    except OSError as e:
+        log.debug("%s yozilmadi: %s", path, e)
+
+
+def same_path(a: str, b: str) -> bool:
+    return os.path.normcase(os.path.abspath(a)) == os.path.normcase(os.path.abspath(b))
+
+
+def my_family() -> set[int]:
+    """Oʻzimiz va ota jarayonlarimiz. PyInstaller onefile exe ikki jarayon boʻlib ishlaydi (ota — yuklovchi),
+    otani oʻldirsak, oʻzimiz ham yopilamiz — shuning uchun ularni hech qachon “boshqa nusxa” deb hisoblamaymiz."""
+    fam = {os.getpid()}
+    try:
+        fam.update(p.pid for p in psutil.Process().parents())
+    except Exception:
+        pass
+    return fam
+
+
 def other_instances() -> list:
-    me = os.getpid()
+    fam = my_family()
     names = {"pcpulseagent.exe"}
     if FROZEN:
         names.add(os.path.basename(sys.executable).lower())
     out = []
     for p in psutil.process_iter(["name"]):
-        if p.pid != me and (p.info["name"] or "").lower() in names:
+        if p.pid not in fam and (p.info["name"] or "").lower() in names:
             out.append(p)
     return out
+
+
+def installed_procs() -> list:
+    """INSTALLED_EXE dan ishlayotgan jarayonlar (oʻzimizdan tashqari)."""
+    fam = my_family()
+    out = []
+    for p in psutil.process_iter(["name", "exe"]):
+        if p.pid in fam:
+            continue
+        exe = p.info.get("exe") or ""
+        if exe and same_path(exe, INSTALLED_EXE):
+            out.append(p)
+    return out
+
+
+def mark_running() -> None:
+    """Yangilovchi yangi versiya haqiqatan ishga tushganini shu fayl orqali biladi."""
+    if FROZEN:
+        write_json(VERSION_FILE, {"version": VERSION, "pid": os.getpid(), "ts": time.time(), "exe": sys.executable})
+
+
+def installed_version() -> str | None:
+    return read_json(VERSION_FILE).get("version")
+
+
+def newer_than_installed() -> bool:
+    """Shu exe oʻrnatilgan agentdan yangimi? (2.0/2.1 versiya faylini yozmagan — ular eski hisoblanadi)."""
+    if not (IS_WIN and FROZEN) or same_path(sys.executable, INSTALLED_EXE) or not os.path.exists(INSTALLED_EXE):
+        return False
+    inst = installed_version()
+    if inst:
+        return updater.newer(VERSION, inst)
+    try:
+        return updater.sha256_file(INSTALLED_EXE) != updater.sha256_file(sys.executable)
+    except OSError:
+        return True
+
+
+def start_agent(expect: str | None = None, timeout: float = 45) -> bool:
+    """Oʻrnatilgan agentni ishga tushiradi (avval rejalashtirilgan vazifa orqali, boʻlmasa toʻgʻridan-toʻgʻri).
+    expect berilsa, shu versiya haqiqatan ishga tushganini kutadi."""
+    t0 = time.time()
+    via_task = IS_WIN and task_exists() and start_task()
+    if not via_task:
+        spawn_detached(INSTALLED_EXE)
+    if not expect:
+        return True
+    fallback = not via_task
+    seen_at = None
+    while time.time() - t0 < timeout:
+        v = read_json(VERSION_FILE)
+        pid = v.get("pid")
+        if v.get("version") == expect and float(v.get("ts") or 0) >= t0 - 1 and pid and psutil.pid_exists(int(pid)):
+            seen_at = seen_at or time.time()
+            if time.time() - seen_at >= 5:  # birinchi soniyalarda yiqilib qolmadi
+                return True
+        elif seen_at:
+            seen_at = None
+        if not fallback and time.time() - t0 > 12 and not installed_procs():
+            log.info("vazifa agentni ishga tushirmadi — toʻgʻridan-toʻgʻri ishga tushiramiz")
+            spawn_detached(INSTALLED_EXE)
+            fallback = True
+        time.sleep(0.5)
+    return False
+
+
+def apply_update(stop_running: bool = False, no_start: bool = False) -> tuple[bool, str]:
+    """Yangi exe tomonidan bajariladi: eski agent yopilishini kutadi, oʻzini INSTALLED_EXE oʻrniga qoʻyadi,
+    ishga tushiradi va tekshiradi. Yangi versiya ishga tushmasa — eski nusxani qaytaradi."""
+    if not (IS_WIN and FROZEN):
+        return False, "Faqat Windows dagi .exe yangilanadi"
+    src = os.path.abspath(sys.executable)
+    if same_path(src, INSTALLED_EXE):
+        return False, "Bu fayl allaqachon oʻrnatilgan"
+    prev = installed_version() or read_json(UPDATE_STATE).get("from")
+    log.info("yangilash: %s → %s (%s)", prev or "?", VERSION, src)
+    if stop_running:
+        stop_other_instances()
+    t0 = time.time()
+    while installed_procs() and time.time() - t0 < 40:
+        time.sleep(0.5)
+    if installed_procs():
+        stop_other_instances()
+        psutil.wait_procs(installed_procs(), timeout=5)
+    had_old = os.path.exists(INSTALLED_EXE)
+    if had_old:
+        try:
+            shutil.copy2(INSTALLED_EXE, PREV_EXE)
+        except OSError as e:
+            log.warning("zaxira nusxa olinmadi: %s", e)
+            had_old = False
+    err = None
+    for _ in range(30):
+        try:
+            shutil.copy2(src, INSTALLED_EXE + ".new")
+            os.replace(INSTALLED_EXE + ".new", INSTALLED_EXE)
+            err = None
+            break
+        except OSError as e:
+            err = e
+            time.sleep(1)
+    state = {"from": prev, "to": VERSION, "ts": time.time(), "reported": False}
+    if err:
+        log.error("faylni almashtirib boʻlmadi: %s", err)
+        write_json(UPDATE_STATE, {**state, "ok": False, "error": f"Faylni almashtirib boʻlmadi: {err}"})
+        if not no_start and had_old:
+            start_agent()
+        return False, f"Faylni almashtirib boʻlmadi: {err}"
+    if no_start:
+        write_json(UPDATE_STATE, {**state, "ok": True})
+        return True, ""
+    if not task_exists():
+        install_autostart(INSTALLED_EXE)
+    if start_agent(expect=VERSION):
+        write_json(UPDATE_STATE, {**state, "ok": True})
+        log.info("yangilandi: %s", VERSION)
+        return True, ""
+    log.error("yangi versiya %s ishga tushmadi — oldingi versiyaga qaytarilmoqda", VERSION)
+    for p in installed_procs():
+        try:
+            p.kill()
+        except Exception:
+            pass
+    restored = False
+    if had_old:
+        for _ in range(15):
+            try:
+                shutil.copy2(PREV_EXE, INSTALLED_EXE)
+                restored = True
+                break
+            except OSError:
+                time.sleep(1)
+    write_json(UPDATE_STATE, {**state, "ok": False, "bad": VERSION,
+                              "error": f"{VERSION} ishga tushmadi" + (" — oldingi versiya qaytarildi" if restored else "")})
+    start_agent()
+    return False, f"Yangi versiya ishga tushmadi{' — oldingi versiya qaytarildi' if restored else ''}"
 
 
 def stop_other_instances(timeout: float = 8) -> None:
@@ -1106,6 +1389,45 @@ def manage_flow(cfg: dict | None) -> None:
                              "Kompyuterni saytdagi Sozlamalar → Kompyuterlar boʻlimidan ham oʻchirishingiz mumkin.")
 
 
+def manual_update_flow() -> None:
+    """Foydalanuvchi yangi PCPulseAgent.exe ni ishga tushirdi, eskisi esa ishlab turibdi: savolsiz yangilaymiz."""
+    import gui
+
+    old = installed_version() or "eski versiya"
+    try:
+        ok, msg = gui.busy_window("PC Pulse", f"PC Pulse yangilanmoqda…\n{old} → {VERSION}", lambda: apply_update(stop_running=True))
+    except Exception as e:
+        ok, msg = False, str(e)
+    if ok:
+        gui.info("PC Pulse", f"Tayyor! Agent {VERSION} versiyaga yangilandi va fon rejimida ishlayapti.\n\n"
+                             "Bundan keyingi yangilanishlar avtomatik oʻrnatiladi — bu faylni qayta yuklab olish shart emas.")
+    else:
+        gui.info("PC Pulse", f"Yangilab boʻlmadi: {msg}\n\nKompyuterni qayta ishga tushirib, faylni yana bir bor ishga tushirib koʻring.")
+
+
+def check_update_cli(path: str) -> int:
+    """CI uchun: latest.json ni oʻqiydi, exe ni yuklab, SHA-256 ni tekshiradi."""
+    import tempfile
+
+    res: dict = {"version": VERSION, "url": cloud.UPDATE_URL}
+    try:
+        info = updater.fetch_latest(UA)
+        res["latest"] = info
+        res["newer_than_me"] = updater.newer(info["version"], VERSION)
+        d = os.path.join(tempfile.gettempdir(), "pcpulse-update-test")
+        p = updater.download(info, d, UA)
+        res["downloaded"] = p
+        res["sha_ok"] = updater.sha256_file(p) == info["sha256"]
+        if FROZEN:
+            res["same_as_me"] = updater.sha256_file(sys.executable) == info["sha256"]
+        updater.cleanup(d)
+    except Exception as e:
+        res["error"] = repr(e)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(res, f, ensure_ascii=False, indent=2)
+    return 0 if res.get("sha_ok") else 2
+
+
 def setup_cli(cfg: dict | None, args) -> dict:
     print("\n=== PC Pulse agentini ulash ===\n")
     user = args.user or input("Username: ").strip()
@@ -1126,7 +1448,7 @@ def selftest(path: str) -> int:
     import platform
     import traceback
 
-    res: dict = {"pawnio_installer": tools.pawnio_installer(), "pawnio_installed": tools.pawnio_installed(), "version": VERSION, "frozen": FROZEN, "python": platform.python_version(), "lhm_dir": LHM_DIR, "admin": winapi.is_admin()}
+    res: dict = {"pawnio_installer": tools.pawnio_installer(), "pawnio_installed": tools.pawnio_installed(), "version": VERSION, "update_url": cloud.UPDATE_URL, "frozen": FROZEN, "python": platform.python_version(), "lhm_dir": LHM_DIR, "admin": winapi.is_admin()}
     try:
         res["lhm_files"] = sorted(os.listdir(LHM_DIR))[:40]
     except Exception as e:
@@ -1202,6 +1524,10 @@ def main():
     ap.add_argument("--sensor-source", choices=["auto", "lhm", "lhm-http", "basic"])
     ap.add_argument("--debug", action="store_true")
     ap.add_argument("--restarted", action="store_true", help=argparse.SUPPRESS)
+    ap.add_argument("--apply-update", action="store_true", help=argparse.SUPPRESS)
+    ap.add_argument("--no-start", action="store_true", help=argparse.SUPPRESS)
+    ap.add_argument("--check-update", metavar="JSON", help=argparse.SUPPRESS)
+    ap.add_argument("--test-handoff", metavar="EXE", help=argparse.SUPPRESS)  # CI: eski agent yangilovchini ishga tushirib chiqib ketishi
     args, _ = ap.parse_known_args()
     if sys.stdout and hasattr(sys.stdout, "reconfigure"):
         try:
@@ -1213,7 +1539,18 @@ def main():
         return
     if args.selftest:
         sys.exit(selftest(args.selftest))
+    if args.check_update:
+        sys.exit(check_update_cli(args.check_update))
     setup_logging(args.debug)
+    if args.test_handoff:
+        subprocess.Popen([args.test_handoff, "--apply-update"], creationflags=0x00000008 | 0x00000200 if IS_WIN else 0,
+                         close_fds=True, cwd=os.path.dirname(os.path.abspath(args.test_handoff)))
+        os._exit(0)
+    if args.apply_update:  # eski agent yangi versiyani yuklab, shu rejimda ishga tushirdi
+        ok, msg = apply_update(no_start=args.no_start)
+        if not ok:
+            log.error("yangilanish: %s", msg)
+        sys.exit(0 if ok else 3)
     cfg = load_config()
     import gui
 
@@ -1230,12 +1567,22 @@ def main():
             if lock:
                 break
     if lock is None:  # boshqa nusxa allaqachon ishlayapti
-        if gui.available():
+        if FROZEN and same_path(sys.executable, INSTALLED_EXE):  # vazifa rejalashtiruvchisi ikkinchi marta ishga tushirdi
+            log.info("agent allaqachon ishlayapti — chiqamiz")
+            return
+        if gui.available() and newer_than_installed():  # yangi exe ni yuklab ishga tushirishdi — soʻramasdan yangilaymiz
+            manual_update_flow()
+        elif gui.available():
             manage_flow(cfg)
         else:
             log.error("Agent allaqachon ishlayapti.")
         return
 
+    if cfg and cfg.get("token") and not args.setup and gui.available() and newer_than_installed():
+        lock.close()  # eski agent hozir ishlamayapti, lekin oʻrnatilgan — uni shu yangi fayl bilan almashtiramiz
+        manual_update_flow()
+        return
+    mark_running()
     if args.setup or not cfg or not cfg.get("token"):
         tty = bool(sys.stdin and sys.stdin.isatty())
         if args.user and args.password or (tty and not FROZEN):
@@ -1272,6 +1619,7 @@ def main():
     if args.sensor_source:
         cfg["sensor_source"] = args.sensor_source
         save_config(cfg)
+    mark_running()
     if IS_WIN and not winapi.is_admin():
         log.warning("Administrator huquqi yoʻq — harorat/kuchlanish/fan sensorlari va fan boshqaruvi cheklangan boʻladi.")
     Agent(cfg, lock).run()

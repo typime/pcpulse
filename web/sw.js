@@ -1,5 +1,5 @@
 /* PC Pulse service worker: oflayn qobiq + push bildirishnomalar (GitHub Pages pastki papkasida ham ishlaydi) */
-const CACHE = "pcpulse-v2";
+const CACHE = "pcpulse-v3";
 const SHELL = ["./", "./index.html", "./app.js", "./styles.css", "./config.js", "./manifest.webmanifest",
                "./icons/icon-192.png", "./icons/icon-512.png", "./icons/badge-96.png"];
 const scopeUrl = (p) => new URL(p, self.registration.scope).href;

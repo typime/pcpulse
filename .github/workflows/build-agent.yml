@@ -53,6 +53,14 @@ jobs:
           Invoke-WebRequest $asset.browser_download_url -OutFile agent/pawnio/PawnIO_setup.exe
           Write-Host "PawnIO $($rel.tag_name): $((Get-Item agent/pawnio/PawnIO_setup.exe).Length) bayt"
 
+      - name: Versiya raqami
+        shell: pwsh
+        run: |
+          $v = "2.2.${{ github.run_number }}"
+          "VERSION = `"$v`"" | Out-File agent/build_info.py -Encoding utf8
+          "AGENT_VERSION=$v" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Agent $v"
+
       - name: PCPulseAgent.exe ni yigʻish
         working-directory: agent
         run: >
@@ -70,6 +78,8 @@ jobs:
           Get-Content selftest.json
           Write-Host "exit code: $($p.ExitCode)"
           if ($p.ExitCode -ne 0) { exit 1 }
+          $st = Get-Content selftest.json -Raw | ConvertFrom-Json
+          if ($st.version -ne $env:AGENT_VERSION) { Write-Error "Versiya $($st.version) != $env:AGENT_VERSION"; exit 1 }
 
       - name: PawnIO jim oʻrnatilishini sinash
         shell: pwsh
@@ -84,21 +94,109 @@ jobs:
           $q = Start-Process -FilePath dist\PCPulseAgent.exe -ArgumentList '--selftest', "$PWD\selftest_after_pawnio.json" -Wait -PassThru
           Get-Content selftest_after_pawnio.json
 
+      - name: Avtomatik yangilanishni sinash
+        shell: pwsh
+        working-directory: agent
+        timeout-minutes: 12
+        run: |
+          $data = Join-Path $env:LOCALAPPDATA 'PCPulse'
+          $inst = Join-Path $data 'PCPulseAgent.exe'
+          $build = (Resolve-Path dist\PCPulseAgent.exe).Path
+          $hash = (Get-FileHash $build).Hash
+          New-Item -ItemType Directory -Force $data | Out-Null
+          function Agents { @(Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $inst }) }
+          function StopAgents { Agents | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep 2 }
+          function State { Get-Content "$data\update_state.json" -Raw -ErrorAction SilentlyContinue | ConvertFrom-Json }
+          $res = [ordered]@{}
+
+          # 1) Yangilovchi eski agent yopilishini kutadi, faylni almashtiradi va yangisini ishga tushiradi.
+          #    “Eski agent” — INSTALLED_EXE oʻrnida ~14 soniya ishlaydigan ping.exe nusxasi.
+          Copy-Item "$env:WINDIR\System32\PING.EXE" $inst -Force
+          $old = Start-Process -FilePath $inst -ArgumentList '-n','15','127.0.0.1' -PassThru -WindowStyle Hidden
+          Start-Sleep 1
+          $t0 = Get-Date
+          $p = Start-Process -FilePath $build -ArgumentList '--apply-update' -PassThru
+          $null = $p.Handle  # ExitCode keyin oʻqilishi uchun
+          if (-not $p.WaitForExit(180000)) { Write-Error "apply-update tugamadi"; exit 1 }
+          $waited = [math]::Round(((Get-Date) - $t0).TotalSeconds, 1)
+          Start-Sleep 6
+          $res.apply = [ordered]@{ exit = $p.ExitCode; waited_s = $waited; old_exited = $old.HasExited
+            replaced = ((Get-FileHash $inst).Hash -eq $hash); prev_saved = (Test-Path "$data\PCPulseAgent.prev.exe")
+            running_after = (Agents).Count; state = (State); version = (Get-Content "$data\version.json" -Raw -ErrorAction SilentlyContinue) }
+
+          # 2) Topshirish: ishlab turgan agent yangilovchini ishga tushirib, oʻzi chiqib ketadi (avval oddiy, keyin vazifa rejalashtiruvchisi ostida).
+          $tmp = Join-Path $env:TEMP 'pp-upd'
+          New-Item -ItemType Directory -Force $tmp | Out-Null
+          $updExe = Join-Path $tmp 'PCPulseAgent-test.exe'
+          foreach ($mode in 'process', 'task') {
+            StopAgents
+            Unregister-ScheduledTask -TaskName 'PC Pulse Agent' -Confirm:$false -ErrorAction SilentlyContinue
+            Copy-Item $build $updExe -Force
+            $t1 = Get-Date
+            if ($mode -eq 'process') {
+              $h = Start-Process -FilePath $inst -ArgumentList '--test-handoff', "`"$updExe`"" -PassThru
+              $null = $h.WaitForExit(60000)
+            } else {
+              $act = New-ScheduledTaskAction -Execute $inst -Argument "--test-handoff `"$updExe`""
+              $pr = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType S4U -RunLevel Highest
+              Register-ScheduledTask -TaskName 'PP handoff test' -Action $act -Principal $pr -Force | Out-Null
+              Start-ScheduledTask -TaskName 'PP handoff test'
+            }
+            Start-Sleep 3
+            for ($i = 0; $i -lt 120; $i++) {
+              if (-not (Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $updExe })) { break }
+              Start-Sleep 1
+            }
+            Start-Sleep 4
+            $st = State
+            $res[$mode] = [ordered]@{ done_s = [math]::Round(((Get-Date) - $t1).TotalSeconds, 1); ok = $st.ok; error = $st.error
+              fresh = ($st.ts -gt ([DateTimeOffset]$t1).ToUnixTimeSeconds() - 2); running = (Agents).Count
+              task_info = (Get-ScheduledTaskInfo -TaskName 'PP handoff test' -ErrorAction SilentlyContinue | Select-Object LastRunTime, LastTaskResult) }
+          }
+          StopAgents
+          Unregister-ScheduledTask -TaskName 'PP handoff test' -Confirm:$false -ErrorAction SilentlyContinue
+          Unregister-ScheduledTask -TaskName 'PC Pulse Agent' -Confirm:$false -ErrorAction SilentlyContinue
+          $res | ConvertTo-Json -Depth 5 | Out-File update_test.json -Encoding utf8
+          Get-Content update_test.json
+          Write-Host "---- agent.log"
+          Get-Content "$data\agent.log" -Tail 60 -ErrorAction SilentlyContinue
+          $a = $res.apply
+          $ok = $a.exit -eq 0 -and $a.replaced -and $a.waited_s -ge 8 -and $a.running_after -ge 1 -and
+                $res.process.ok -and $res.process.fresh -and $res.process.running -ge 1 -and
+                $res.task.ok -and $res.task.fresh -and $res.task.running -ge 1
+          if (-not $ok) { Write-Error "Avtomatik yangilanish sinovi muvaffaqiyatsiz"; exit 1 }
+
+      - name: latest.json
+        shell: pwsh
+        working-directory: agent
+        run: |
+          $v = $env:AGENT_VERSION
+          $f = Get-Item dist\PCPulseAgent.exe
+          [ordered]@{ version = $v; tag = "agent-v$v"
+            url = "https://github.com/${{ github.repository }}/releases/download/agent-v$v/PCPulseAgent.exe"
+            sha256 = (Get-FileHash $f.FullName -Algorithm SHA256).Hash.ToLower(); size = $f.Length
+            published = (Get-Date).ToUniversalTime().ToString('o') } | ConvertTo-Json | Out-File dist\latest.json -Encoding utf8
+          Get-Content dist\latest.json
+
       - uses: actions/upload-artifact@v4
         with:
           name: PCPulseAgent
           path: |
             agent/dist/PCPulseAgent.exe
+            agent/dist/latest.json
             agent/selftest.json
+            agent/update_test.json
 
       - name: Reliz
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: agent-v2.1.${{ github.run_number }}
-          name: PC Pulse agent 2.1.${{ github.run_number }}
+          tag_name: agent-v${{ env.AGENT_VERSION }}
+          name: PC Pulse agent ${{ env.AGENT_VERSION }}
           make_latest: true
           files: |
             agent/dist/PCPulseAgent.exe
+            agent/dist/latest.json
+            agent/update_test.json
             agent/selftest.json
             agent/pawnio_test.json
             agent/selftest_after_pawnio.json
@@ -110,6 +208,22 @@ jobs:
             3. Saytdagi username va parol bilan kiring — tamom.
             4. Harorat sensorlari uchun PawnIO drayveri agent tomonidan avtomatik oʻrnatiladi.
 
-            Eski versiya ishlayotgan boʻlsa: yangi faylni ishga tushiring → “Shu faylni oʻrnatish (yangilash)”.
+            Agent 2.2 va undan yangilari oʻzini avtomatik yangilaydi (6 soatda bir tekshiradi; saytdan “Hozir yangilash” ham mumkin).
+            2.0 yoki 2.1 oʻrnatilgan boʻlsa: shu faylni bir marta ishga tushiring — eskisini oʻzi almashtiradi.
 
             Sayt: https://typime.github.io/pcpulse/
+
+      - name: Relizdan keyin yangilanish manzilini tekshirish
+        shell: pwsh
+        working-directory: agent
+        run: |
+          $r = $null
+          for ($i = 0; $i -lt 6; $i++) {
+            $p = Start-Process -FilePath dist\PCPulseAgent.exe -ArgumentList '--check-update', "$PWD\check_update.json" -PassThru
+            $null = $p.WaitForExit(240000)
+            $r = Get-Content check_update.json -Raw | ConvertFrom-Json
+            if ($r.sha_ok -and $r.latest.version -eq $env:AGENT_VERSION) { break }
+            Start-Sleep 15
+          }
+          Get-Content check_update.json
+          if (-not ($r.sha_ok -and $r.same_as_me)) { Write-Error "latest.json yoki yuklash ishlamayapti"; exit 1 }

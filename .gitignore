@@ -9,3 +9,4 @@ agent/lhm/*
 .env
 .DS_Store
 agent/pawnio/
+agent/build_info.py

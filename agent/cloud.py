@@ -4,3 +4,6 @@ import os
 SUPABASE_URL = os.environ.get("PCPULSE_SUPABASE_URL", "https://pdoxhbxyyfoihklzxfnn.supabase.co")
 SUPABASE_KEY = "sb_publishable_Hp639ARtc1tlMnlU6xcdyw_NwvPpMHq"
 WEB_URL = "https://typime.github.io/pcpulse/"
+# Avtomatik yangilanish: oxirgi relizdagi versiya maʼlumoti (PCPulseAgent.exe bilan birga CI joylaydi)
+UPDATE_URL = os.environ.get("PCPULSE_UPDATE_URL", "https://github.com/typime/pcpulse/releases/latest/download/latest.json")
+EXE_URL = "https://github.com/typime/pcpulse/releases/latest/download/PCPulseAgent.exe"
