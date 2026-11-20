@@ -31,7 +31,9 @@ Kompyuterni kuzatadigan va masofadan boshqaradigan ilova. Siz harorat, yuklama, 
 >
 > **Yangilanish avtomatik:** agent 6 soatda bir yangi versiyani tekshiradi, yuklab oladi (SHA-256 bilan tekshirib) va oʻzini almashtiradi. Yangi versiya ishga tushmasa, oldingisi qaytariladi. Saytda “Hozir yangilash” tugmasi ham bor; sozlamalardan oʻchirish mumkin. Agent 2.0/2.1 oʻrnatilgan boʻlsa, yangi exe ni bir marta ishga tushiring — eskisini oʻzi almashtiradi.
 
-`PCPulseAgent.exe` ni qayta ochsangiz, boshqaruv oynasi chiqadi. Unda saytni ochish, boshqa akkauntga qayta ulash, yangi versiyani oʻrnatish yoki agentni toʻxtatib olib tashlash mumkin.
+**Kompyuterda oʻz oynasi:** `PCPulseAgent.exe` ni yoki Start menyusi / ish stolidagi “PC Pulse” yorligʻini ochsangiz, PC Pulse brauzersiz, alohida dastur oynasida ochiladi (Windows’ning WebView2 dvigateli). Administrator ruxsati faqat oʻrnatish va yangilashda soʻraladi. Agent boshqaruv menyusi (qayta ulash, qayta ishga tushirish, olib tashlash): `PCPulseAgent.exe --manage`.
+
+**Koʻrinish:** asosiy mavzu — Aurora Glass (fon kompyuter haroratiga qarab rangini oʻzgartiradi), ikkinchisi — Once UI (qorongʻi / yorugʻ / tizim). Sozlamalar → Koʻrinish. Eski interfeys vaqtincha `…/pcpulse/classic/` manzilida turibdi.
 
 ---
 
@@ -78,8 +80,15 @@ Kompyuterda bir marta sozlash kerak:
 ## Dasturchilar uchun
 
 ```
-web/                  PWA (GitHub Pages ga avtomatik chiqadi) — vanilla JS, kutubxonasiz
+app/                  Interfeys (PWA + kompyuter oynasi) — React 19 + TypeScript, esbuild bilan yigʻiladi
+  src/core/           maʼlumot qatlami: Supabase RPC, jonli kuzatuv, buyruqlar, push, mavzu
+  src/ui/             dizayn tizimi komponentlari (Panel, MetricCard, Ring, grafiklar, modal…)
+  src/screens/        ekranlar: Umumiy, Tizim, Jarayonlar, Ekran vaqti, Boshqaruv, Sozlamalar
+  src/styles/         tokenlar (Aurora Glass, Once UI), asos, komponentlar, ekranlar
+  public/             service worker, manifest, ikonlar, shriftlar (Pulse Sans, Geist), Once UI tokenlari
+web/                  eski interfeys (vanilla JS) — /classic/ manzilida
 agent/                Windows agent (Python → PyInstaller orqali PCPulseAgent.exe)
+  window.py           PC Pulse oynasi (pywebview / WebView2)
   agent.py            telemetriya, buyruqlar, ekran vaqti, qoʻriqlash, taymer, oʻrnatish
   sensors.py          LibreHardwareMonitor (DLL / web) + psutil/nvidia-smi zaxira
   health.py           holat tahlili va oʻzbekcha maslahatlar
@@ -92,11 +101,12 @@ supabase/
 ```
 
 - `main` ga push qilinganda:
-  - `web/` oʻzgarsa, sayt yangilanadi.
+  - `app/` yoki `web/` oʻzgarsa, interfeys yigʻiladi (`npm run typecheck`, `npm run build`) va sayt yangilanadi.
+- Interfeysni mahalliy yigʻish: `cd app && npm install && npm run build` (natija — `app/dist/`).
   - `agent/` oʻzgarsa, Windows’da yangi `PCPulseAgent.exe` yigʻiladi, oʻz-oʻzini tekshiradi (`--selftest`) va yangi reliz chiqadi.
 - Agentni manbadan ishga tushirish: `pip install -r agent/requirements.txt && python agent/agent.py`.
 - Oʻz Supabase loyihangizda ishlatish uchun:
   1. `supabase/migrations` ni tartib bilan qoʻllang.
   2. `pp.config` ga VAPID kalitlari va `cron_secret` ni yozing (`002_pcpulse_cron.sql` dagi izoh).
   3. `pp-push` funksiyasini `--no-verify-jwt` bilan joylang.
-  4. `web/config.js` va `agent/cloud.py` dagi URL/kalitni almashtiring.
+  4. `app/public/config.js`, `web/config.js` va `agent/cloud.py` dagi URL/kalitni almashtiring.
