@@ -10,3 +10,5 @@ agent/lhm/*
 .DS_Store
 agent/pawnio/
 agent/build_info.py
+app/node_modules/
+app/dist/

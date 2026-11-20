@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="uz" data-ui="aurora" data-theme="dark" data-brand="cyan" data-accent="violet" data-neutral="gray" data-solid="contrast" data-solid-style="flat" data-border="playful" data-surface="filled" data-transition="all" data-scaling="100">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#060912">
+  <meta name="description" content="Kompyuter holati, fanlar, ekran vaqti va masofaviy boshqaruv">
+  <meta name="color-scheme" content="dark light">
+  <script>
+    /* Mavzu sahifa chizilishidan oldin: Aurora Glass (asosiy) yoki Once UI; Once uchun qorongʻi/yorugʻ/tizim */
+    (function () {
+      var d = document.documentElement, ui = "aurora", mode = "dark";
+      try { ui = localStorage.getItem("pp_ui") || "aurora"; mode = localStorage.getItem("pp_mode") || "dark"; } catch (e) {}
+      if (ui !== "once") ui = "aurora";
+      if (mode === "system") mode = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+      d.setAttribute("data-ui", ui);
+      d.setAttribute("data-theme", ui === "once" && mode === "light" ? "light" : "dark");
+      if (/[?&]app=desktop/.test(location.search) || window.pywebview) d.setAttribute("data-shell", "desktop-app");
+    })();
+  </script>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PC Pulse">
+  <link rel="preload" href="fonts/PulseSans-VF.woff" as="font" type="font/woff" crossorigin>
+  <link rel="stylesheet" href="vendor/once-ui/tokens.css">
+  <!--CSS-->
+  <title>PC Pulse</title>
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div id="root"></div>
+  <noscript>PC Pulse ishlashi uchun JavaScript kerak.</noscript>
+  <script src="config.js"></script>
+  <!--JS-->
+</body>
+</html>

@@ -1,0 +1,104 @@
+/* PC Pulse — asos: reset, fon, tipografiya, karkas, harakat qoidalari */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; background: var(--bg); }
+body {
+  margin: 0; min-height: 100dvh; color: var(--text);  /* fon html da — body fonsiz, aurora qatlami koʻrinsin */
+  font-family: var(--font); font-size: var(--fs-m); line-height: var(--lh-body); font-stretch: var(--wd-body);
+  font-feature-settings: "tnum" 1, "case" 1; font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; -webkit-tap-highlight-color: transparent;
+}
+button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
+button { cursor: pointer; }
+a { color: var(--accent); text-decoration: none; }
+img, svg { display: block; }
+h1, h2, h3, h4, p { margin: 0; }
+:focus { outline: none; }
+:focus-visible { box-shadow: var(--focus); border-radius: var(--r-xs); }
+::selection { background: color-mix(in srgb, var(--accent) 35%, transparent); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* aylantirish chizigʻi */
+* { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
+
+/* ---------------------------------------------------------------- aurora fon */
+.aurora { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; display: none; }
+[data-ui="aurora"] .aurora { display: block; background:
+  radial-gradient(120% 80% at 50% -10%, rgba(30, 44, 110, .55), transparent 60%),
+  linear-gradient(180deg, #070b18 0%, #05080f 55%, #04060c 100%); }
+.aurora i {
+  position: absolute; display: block; border-radius: 50%;
+  -webkit-mask-image: radial-gradient(closest-side, #000 0%, rgba(0, 0, 0, .55) 45%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 0%, rgba(0, 0, 0, .55) 45%, transparent 100%);
+  transition: background-color 2.4s var(--ease-in-out);
+}
+.aurora i:nth-child(1) { width: 80vmax; height: 60vmax; top: -30vmax; left: -22vmax; background-color: var(--aur-a); opacity: .58; }
+.aurora i:nth-child(2) { width: 66vmax; height: 54vmax; top: -20vmax; right: -24vmax; background-color: var(--aur-b); opacity: .46; }
+.aurora i:nth-child(3) { width: 62vmax; height: 48vmax; bottom: -26vmax; left: 16vmax; background-color: var(--aur-c); opacity: .3; }
+.aurora i:nth-child(4) { width: 52vmax; height: 42vmax; bottom: -20vmax; right: -14vmax; background-color: var(--aur-d); opacity: .55; }
+
+/* ---------------------------------------------------------------- tipografiya */
+.t-display { font-family: var(--font-display); font-stretch: var(--wd-display); font-weight: 640; letter-spacing: -.035em; line-height: var(--lh-tight); }
+.t-h1 { font-family: var(--font-display); font-stretch: var(--wd-heading); font-size: clamp(24px, 2.6vw, 34px); font-weight: 620; letter-spacing: -.03em; line-height: 1.12; }
+.t-h2 { font-stretch: var(--wd-heading); font-size: var(--fs-xl); font-weight: 600; letter-spacing: -.02em; line-height: 1.2; }
+.t-h3 { font-stretch: var(--wd-heading); font-size: var(--fs-l); font-weight: 600; letter-spacing: -.012em; line-height: 1.25; }
+.t-label { font-size: var(--fs-s); font-weight: 520; color: var(--text-2); }
+.t-sub { font-size: var(--fs-s); color: var(--text-2); }
+.t-faint { color: var(--text-3); }
+.t-num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.t-unit { font-size: .52em; font-weight: 560; color: var(--text-2); margin-left: .12em; letter-spacing: 0; font-stretch: 100%; }
+.t-ok { color: var(--ok); } .t-warn { color: var(--warn); } .t-crit { color: var(--crit); } .t-info { color: var(--info); } .t-cool { color: var(--c-cpu); } .t-na { color: var(--text-3); }
+.mono { font-family: var(--font-mono); font-size: .92em; }
+
+/* ---------------------------------------------------------------- karkas */
+.shell { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); min-height: 100dvh; }
+.main { min-width: 0; padding: var(--sp-6) clamp(16px, 3vw, 40px) 72px; }
+.main-inner { max-width: var(--content-max); margin: 0 auto; }
+.page { display: grid; gap: var(--sp-4); }
+.page > * { min-width: 0; }
+
+.grid { display: grid; gap: var(--sp-4); }
+.grid.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid.split { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); }
+.grid.split-r { grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr); }
+.row { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.row.tight { gap: var(--sp-2); }
+.row.between { justify-content: space-between; }
+.row.nowrap { flex-wrap: nowrap; }
+.stack { display: grid; gap: var(--sp-3); }
+.stack.s2 { gap: var(--sp-2); }
+.grow { flex: 1; min-width: 0; }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 1200px) { .grid.c4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid.c3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 960px) { .grid.split, .grid.split-r, .grid.c2 { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .main { padding: calc(var(--sp-3) + env(safe-area-inset-top)) var(--sp-4) calc(108px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 560px) { .grid.c3 { grid-template-columns: minmax(0, 1fr); } .grid.c4, .grid { gap: var(--sp-3); } .page { gap: var(--sp-3); } }
+
+/* ---------------------------------------------------------------- harakat */
+@keyframes pp-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes pp-fade { from { opacity: 0; } }
+@keyframes pp-pop { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes pp-rise { from { opacity: 0; transform: translateY(12px); } }
+@keyframes pp-spin { to { transform: rotate(360deg); } }
+@keyframes pp-shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+@keyframes pp-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 55%, transparent); } 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+/* sahifa almashganda bir martalik kirish: bolalar ketma-ket */
+.page.enter > * { animation: pp-enter var(--dur-3) var(--ease-out) both; }
+.page.enter > *:nth-child(2) { animation-delay: 40ms; }
+.page.enter > *:nth-child(3) { animation-delay: 80ms; }
+.page.enter > *:nth-child(4) { animation-delay: 120ms; }
+.page.enter > *:nth-child(5) { animation-delay: 160ms; }
+.page.enter > *:nth-child(n+6) { animation-delay: 200ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

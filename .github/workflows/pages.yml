@@ -3,7 +3,7 @@ name: Sayt (GitHub Pages)
 on:
   push:
     branches: [main]
-    paths: ["web/**", ".github/workflows/pages.yml"]
+    paths: ["app/**", "web/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -14,11 +14,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: web/ ni gh-pages ga chiqarish
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Kutubxonalarni oʻrnatish
+        working-directory: app
+        run: npm install --no-audit --no-fund
+      - name: TypeScript tekshiruvi
+        working-directory: app
+        run: npm run typecheck
+      - name: Yigʻish
+        working-directory: app
+        run: npm run build
+      - name: Saytni yigʻish (yangi interfeys + eski /classic/)
+        run: |
+          mkdir -p site/classic
+          cp -r app/dist/. site/
+          cp -r web/. site/classic/
+          ls -la site site/assets
+      - name: gh-pages ga chiqarish
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./web
+          publish_dir: ./site
           publish_branch: gh-pages
           enable_jekyll: false
           force_orphan: true

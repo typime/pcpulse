@@ -1,0 +1,299 @@
+/* PC Pulse — komponentlar. Faqat semantik tokenlar (tokens.css). */
+
+/* ================================================================ Panel (GlassCard) */
+.pnl {
+  position: relative; min-width: 0; padding: var(--sp-5);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-l); box-shadow: var(--sh-1);
+  -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter);
+}
+[data-ui="aurora"] .pnl::before {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: var(--edge);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.pnl.flush { padding: 0; }
+.pnl.tight { padding: var(--sp-4); }
+.pnl.hero { border-radius: var(--r-xl); padding: clamp(20px, 2.6vw, 32px); }
+.pnl.sunken { background: var(--surface-sunken); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.pnl.sunken::before { display: none; }
+a.pnl, button.pnl.click { color: inherit; text-align: left; width: 100%; font: inherit; cursor: pointer;
+  transition: background var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); }
+@media (hover: hover) {
+  a.pnl:hover, button.pnl.click:hover { background: var(--surface-hover); border-color: var(--border-strong); transform: translateY(-1px); }
+}
+a.pnl:active, button.pnl.click:active { transform: translateY(0) scale(.995); }
+
+.sec-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-4); flex-wrap: wrap; }
+.sec-head > div { min-width: 0; }
+.sec-head .t-sub { margin-top: 2px; }
+.divider { height: 1px; background: var(--border); margin: var(--sp-4) 0; border: 0; }
+
+/* ================================================================ Tugmalar */
+[data-ui="aurora"] { --btn-pri: linear-gradient(135deg, #5fe9f6 0%, #5aa2ff 52%, #7c6bff 100%); --btn-pri-ink: #050b1a; --btn-pri-glow: 0 10px 28px -10px rgba(90, 162, 255, .7); }
+[data-ui="once"] { --btn-pri: var(--brand-solid-medium); --btn-pri-ink: var(--brand-on-solid-strong); --btn-pri-glow: none; }
+
+.btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  height: 40px; padding: 0 var(--sp-4); border-radius: var(--r-s); white-space: nowrap; user-select: none;
+  border: 1px solid var(--border-strong); background: color-mix(in srgb, var(--text) 4%, transparent); color: var(--text);
+  font-size: var(--fs-m); font-weight: 560; letter-spacing: -.005em; text-decoration: none;
+  transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out), filter var(--dur-1);
+}
+.btn svg { width: 18px; height: 18px; flex: none; }
+@media (hover: hover) { .btn:hover { background: color-mix(in srgb, var(--text) 9%, transparent); border-color: var(--border-strong); } }
+.btn:active { transform: scale(.975); }
+.btn:focus-visible { border-radius: var(--r-s); }
+.btn.pri { background: var(--btn-pri); color: var(--btn-pri-ink); border-color: transparent; box-shadow: var(--btn-pri-glow); font-weight: 620; }
+@media (hover: hover) { .btn.pri:hover { background: var(--btn-pri); filter: brightness(1.08); } }
+.btn.danger { color: var(--crit); background: color-mix(in srgb, var(--crit) 11%, transparent); border-color: color-mix(in srgb, var(--crit) 34%, transparent); }
+@media (hover: hover) { .btn.danger:hover { background: color-mix(in srgb, var(--crit) 18%, transparent); } }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--text-2); }
+@media (hover: hover) { .btn.ghost:hover { background: var(--surface-hover); color: var(--text); } }
+.btn.s { height: 32px; padding: 0 var(--sp-3); font-size: var(--fs-s); border-radius: calc(var(--r-s) - 2px); }
+.btn.s svg { width: 16px; height: 16px; }
+.btn.icon { width: 40px; padding: 0; }
+.btn.s.icon { width: 32px; }
+.btn.block { width: 100%; }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: .42; pointer-events: none; box-shadow: none; }
+.btn.busy { pointer-events: none; color: transparent !important; }
+.btn.busy > * { visibility: hidden; }
+.btn.busy::after { content: ""; position: absolute; width: 16px; height: 16px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent;
+  animation: pp-spin .7s linear infinite; color: var(--text); }
+.btn.pri.busy::after { color: var(--btn-pri-ink); }
+
+/* ================================================================ Segmentlangan tanlagich */
+.seg { position: relative; display: inline-flex; padding: 3px; gap: 2px; max-width: 100%; overflow-x: auto; scrollbar-width: none;
+  background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--r-s); isolation: isolate; }
+.seg::-webkit-scrollbar { display: none; }
+.seg button { position: relative; z-index: 1; height: 30px; padding: 0 var(--sp-3); border: 0; background: none; white-space: nowrap;
+  border-radius: calc(var(--r-s) - 4px); color: var(--text-2); font-size: var(--fs-s); font-weight: 560; transition: color var(--dur-2) var(--ease-out); }
+.seg button[aria-checked="true"], .seg button[aria-selected="true"] { color: var(--text); }
+@media (hover: hover) { .seg button:hover { color: var(--text); } }
+.seg-ind { position: absolute; z-index: 0; top: 3px; bottom: 3px; left: 0; border-radius: calc(var(--r-s) - 4px);
+  background: color-mix(in srgb, var(--text) 10%, transparent); box-shadow: inset 0 0 0 1px var(--border-strong);
+  transition: transform var(--dur-3) var(--ease-out), width var(--dur-3) var(--ease-out); }
+[data-ui="once"] .seg-ind { background: var(--neutral-alpha-medium); box-shadow: none; }
+
+/* ================================================================ Kalit (Switch) */
+.sw { position: relative; display: inline-block; width: 44px; height: 26px; flex: none; }
+.sw input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+.sw span { position: absolute; inset: 0; border-radius: 99px; background: var(--track); box-shadow: inset 0 0 0 1px var(--border); transition: background var(--dur-2) var(--ease-out); }
+.sw span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .35); transition: transform var(--dur-2) var(--ease-pop); }
+.sw input:checked + span { background: var(--btn-pri); box-shadow: none; }
+[data-ui="once"] .sw input:checked + span::after { background: var(--on-accent); }
+.sw input:checked + span::after { transform: translateX(18px); }
+.sw input:focus-visible + span { box-shadow: var(--focus); }
+.sw input:disabled + span { opacity: .4; }
+
+/* ================================================================ Maydonlar */
+.fld { display: grid; gap: 6px; min-width: 0; }
+.fld > label { font-size: var(--fs-s); font-weight: 540; color: var(--text-2); }
+.in { width: 100%; height: 42px; padding: 0 var(--sp-3); border-radius: var(--r-s); border: 1px solid var(--border);
+  background: var(--surface-sunken); color: var(--text); font-size: var(--fs-m); outline: none;
+  transition: border-color var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out), background var(--dur-1); }
+@media (hover: hover) { .in:hover { border-color: var(--border-strong); } }
+.in:focus { border-color: color-mix(in srgb, var(--accent) 70%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.in::placeholder { color: var(--text-3); }
+textarea.in { height: auto; min-height: 92px; padding: var(--sp-3); resize: vertical; line-height: 1.45; }
+.in.num { width: 96px; text-align: right; }
+.sel { position: relative; display: inline-block; min-width: 0; }
+.sel select { appearance: none; -webkit-appearance: none; padding-right: 34px; cursor: pointer; }
+.sel select option { background: var(--ink-2, var(--surface-background)); color: var(--text); }
+.sel svg { position: absolute; right: 10px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); color: var(--text-2); pointer-events: none; }
+input[type="date"].in, input[type="time"].in { width: auto; }
+::-webkit-calendar-picker-indicator { filter: invert(.75); cursor: pointer; }
+[data-theme="light"] ::-webkit-calendar-picker-indicator { filter: none; }
+
+.range { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; cursor: pointer; margin: 0; }
+.range::-webkit-slider-runnable-track { height: 6px; border-radius: 6px; background: linear-gradient(90deg, var(--accent) var(--p, 50%), var(--track) var(--p, 50%)); }
+[data-ui="aurora"] .range::-webkit-slider-runnable-track { background: linear-gradient(90deg, var(--cyan), var(--blue) var(--p, 50%), var(--track) var(--p, 50%)); }
+.range::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 50%; background: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, .45); }
+.range::-moz-range-track { height: 6px; border-radius: 6px; background: var(--track); }
+.range::-moz-range-progress { height: 6px; border-radius: 6px; background: var(--accent); }
+.range::-moz-range-thumb { width: 22px; height: 22px; border: 0; border-radius: 50%; background: #fff; }
+.range:disabled { opacity: .45; }
+
+/* ================================================================ Holat nuqtasi, teg, xabar */
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-3); flex: none; }
+.dot.ok, .dot.on { background: var(--ok); } .dot.warn { background: var(--warn); } .dot.crit { background: var(--crit); } .dot.info { background: var(--info); }
+.dot.on { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent); }
+.dot.live { animation: pp-pulse 1.8s var(--ease-out) 3; }
+
+.tag { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 var(--sp-3); border-radius: var(--r-pill);
+  background: var(--surface-sunken); border: 1px solid var(--border); color: var(--text-2); font-size: var(--fs-s); font-weight: 520; white-space: nowrap; max-width: 100%; }
+.tag > span:last-child { overflow: hidden; text-overflow: ellipsis; }
+.tag.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 30%, transparent); background: color-mix(in srgb, var(--ok) 9%, transparent); }
+.tag.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 30%, transparent); background: color-mix(in srgb, var(--warn) 9%, transparent); }
+
+.note { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-3); align-items: start; padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-m); border: 1px solid; font-size: var(--fs-s); line-height: 1.5; }
+.note > svg { width: 18px; height: 18px; margin-top: 1px; }
+.note .note-body > * + * { margin-top: var(--sp-2); }
+.note b { font-weight: 640; }
+.note.warn { color: color-mix(in srgb, var(--warn) 30%, var(--text)); background: color-mix(in srgb, var(--warn) 9%, transparent); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+.note.warn > svg { color: var(--warn); }
+.note.info { color: color-mix(in srgb, var(--accent) 22%, var(--text)); background: color-mix(in srgb, var(--accent) 8%, transparent); border-color: color-mix(in srgb, var(--accent) 26%, transparent); }
+.note.info > svg { color: var(--accent); }
+[data-ui="once"] .note.info { color: var(--brand-on-background-strong); background: var(--brand-alpha-weak); border-color: var(--brand-alpha-medium); }
+[data-ui="once"] .note.info > svg { color: var(--brand-on-background-medium); }
+.note.crit { color: color-mix(in srgb, var(--crit) 30%, var(--text)); background: color-mix(in srgb, var(--crit) 9%, transparent); border-color: color-mix(in srgb, var(--crit) 32%, transparent); }
+.note.crit > svg { color: var(--crit); }
+
+/* ================================================================ Oʻlchagich, chiziqlar */
+.meter { height: 6px; border-radius: 6px; background: var(--track); overflow: hidden; }
+.meter > i { display: block; height: 100%; border-radius: inherit; background: var(--c, var(--accent)); transition: width var(--dur-4) var(--ease-out); }
+[data-ui="aurora"] .meter > i { background: linear-gradient(90deg, color-mix(in srgb, var(--c, var(--accent)) 70%, #fff 0%), var(--c, var(--accent))); box-shadow: 0 0 12px -2px color-mix(in srgb, var(--c, var(--accent)) 60%, transparent); }
+.meter.thick { height: 10px; }
+.stackbar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--track); gap: 2px; }
+.stackbar i { display: block; height: 100%; transition: width var(--dur-4) var(--ease-out); }
+.legend { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); margin-top: var(--sp-3); font-size: var(--fs-s); color: var(--text-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+/* ================================================================ Halqa (Gauge) */
+.ring { position: relative; display: inline-grid; place-items: center; flex: none; }
+.ring svg { transform: rotate(-90deg); }
+.ring .trk { stroke: var(--track); }
+.ring .val { stroke: var(--c, var(--accent)); transition: stroke-dashoffset 1s var(--ease-out), stroke var(--dur-3); }
+[data-ui="aurora"] .ring .val { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c, var(--accent)) 55%, transparent)); }
+.ring .center { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+.ring .center b { font-family: var(--font-display); font-stretch: var(--wd-display); font-weight: 640; letter-spacing: -.04em; line-height: 1; }
+.ring .center small { display: block; font-size: var(--fs-xs); color: var(--text-2); margin-top: 2px; }
+
+/* ================================================================ Grafiklar */
+.spark { display: block; width: 100%; height: 40px; overflow: visible; }
+.spark .ln { fill: none; stroke: var(--c); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.chart-wrap { position: relative; touch-action: pan-y; }
+.chart { display: block; width: 100%; height: auto; overflow: visible; }
+.chart .gl { stroke: var(--grid-line); }
+.chart text { fill: var(--text-3); font-size: 11px; font-family: var(--font); }
+.chart .ln { fill: none; stroke: var(--c); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+[data-ui="aurora"] .chart .ln { filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--c) 45%, transparent)); }
+.chart .cross { stroke: var(--border-strong); stroke-dasharray: 3 3; }
+.chart .pt { fill: var(--bg); stroke: var(--c); stroke-width: 2.5; }
+.chart-tip { position: absolute; top: 0; pointer-events: none; padding: 6px 10px; border-radius: var(--r-xs); background: var(--surface-2);
+  border: 1px solid var(--border-strong); box-shadow: var(--sh-2); font-size: var(--fs-s); white-space: nowrap; transform: translateX(-50%);
+  -webkit-backdrop-filter: var(--glass-filter-strong); backdrop-filter: var(--glass-filter-strong); }
+.chart-tip b { font-weight: 640; }
+.bars { display: block; width: 100%; height: auto; overflow: visible; }
+.bars .b { fill: color-mix(in srgb, var(--accent) 34%, transparent); cursor: pointer; transition: fill var(--dur-2) var(--ease-out); }
+[data-ui="aurora"] .bars .b { fill: color-mix(in srgb, var(--blue) 40%, transparent); }
+.bars .b:hover { fill: color-mix(in srgb, var(--accent) 60%, transparent); }
+.bars .b.sel { fill: var(--accent); }
+[data-ui="aurora"] .bars .b.sel { fill: url(#pp-bar-grad); }
+.bars text { fill: var(--text-3); font-size: 11px; font-family: var(--font); }
+.bars text.v { fill: var(--text); font-weight: 600; }
+.cores { display: grid; grid-template-columns: repeat(auto-fill, minmax(12px, 1fr)); gap: 3px; align-items: end; height: 48px; }
+.cores i { display: block; border-radius: 3px 3px 1px 1px; background: var(--c-cpu); opacity: .9; min-height: 3px; transition: height var(--dur-4) var(--ease-out); }
+[data-ui="aurora"] .cores i { background: linear-gradient(180deg, var(--cyan), color-mix(in srgb, var(--blue) 70%, transparent)); }
+
+/* ================================================================ Koʻrsatkich kartasi (MetricCard) */
+.metric { display: flex; flex-direction: column; gap: 6px; padding: var(--sp-4) var(--sp-5) 0; overflow: hidden; }
+.metric-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); min-width: 0; }
+.metric-head .t-label { display: inline-flex; align-items: center; gap: var(--sp-2); color: var(--text-2); }
+.metric-head .t-label svg { width: 16px; height: 16px; color: var(--c); }
+.metric-head .meta { font-size: var(--fs-xs); color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.metric-val { font-size: clamp(32px, 3.2vw, 42px); }
+.metric-sub { display: flex; flex-wrap: wrap; gap: 4px var(--sp-3); font-size: var(--fs-s); color: var(--text-2); min-height: 20px; }
+.metric-foot { margin: auto calc(var(--sp-5) * -1) 0; height: 46px; }
+.metric-foot.pad { padding: 0 var(--sp-5) var(--sp-4); height: auto; margin-top: var(--sp-2); }
+@media (max-width: 560px) {
+  .metric { padding: var(--sp-3) var(--sp-4) 0; }
+  .metric-foot { margin: auto calc(var(--sp-4) * -1) 0; height: 38px; }
+  .metric-foot.pad { padding: 0 var(--sp-4) var(--sp-3); }
+  .metric-head .meta { display: none; }
+}
+
+/* ================================================================ Statistik qator (StatStrip) */
+.strip { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); padding: 0; }
+.strip > div { padding: var(--sp-4) var(--sp-5); min-width: 0; display: grid; gap: 4px; align-content: start; }
+.strip > div + div { border-left: 1px solid var(--border); }
+.strip .v { font-family: var(--font-display); font-stretch: var(--wd-heading); font-size: var(--fs-xl); font-weight: 620; letter-spacing: -.02em; line-height: 1.15; }
+@media (max-width: 960px) {
+  .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .strip > div:nth-child(3) { border-left: 0; }
+  .strip > div:nth-child(n+3) { border-top: 1px solid var(--border); }
+}
+@media (max-width: 560px) { .strip > div { padding: var(--sp-3) var(--sp-4); } .strip .v { font-size: var(--fs-l); } }
+
+/* ================================================================ Kalit–qiymat, roʻyxatlar, jadval */
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px var(--sp-5); margin: 0; font-size: var(--fs-m); }
+.kv dt { color: var(--text-2); }
+.kv dd { margin: 0; text-align: right; font-weight: 540; overflow-wrap: anywhere; }
+.list { display: grid; }
+.li { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: var(--sp-3); align-items: center; padding: var(--sp-3) 0; border-top: 1px solid var(--border); min-width: 0; }
+.li:first-child { border-top: 0; padding-top: 0; }
+.li .t { font-weight: 580; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.li .s { color: var(--text-2); font-size: var(--fs-s); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.li .r { display: flex; align-items: center; gap: var(--sp-3); text-align: right; }
+.li .tip { grid-column: 2 / -1; color: var(--text-2); font-size: var(--fs-s); margin-top: -4px; }
+.av { width: 40px; height: 40px; border-radius: var(--r-s); display: grid; place-items: center; font-weight: 660; font-size: var(--fs-l);
+  background: var(--surface-sunken); border: 1px solid var(--border); color: var(--text); }
+.av svg { width: 20px; height: 20px; color: var(--text-2); }
+.tbl { width: 100%; border-collapse: collapse; font-size: var(--fs-m); }
+.tbl th { text-align: left; color: var(--text-3); font-weight: 540; font-size: var(--fs-s); padding: 0 var(--sp-3) var(--sp-2) 0; }
+.tbl td { padding: 10px var(--sp-3) 10px 0; border-top: 1px solid var(--border); }
+.tbl td.n, .tbl th.n { text-align: right; white-space: nowrap; }
+.scroll-x { overflow-x: auto; }
+
+/* ================================================================ Amal plitkasi (ActionTile) */
+.acts { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--sp-3); }
+.acts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.act { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-3); align-items: center; padding: var(--sp-3);
+  border-radius: var(--r-m); border: 1px solid var(--border); background: color-mix(in srgb, var(--text) 3%, transparent); text-align: left; min-height: 64px;
+  transition: background var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out); }
+@media (hover: hover) { .act:hover { background: var(--surface-hover); border-color: var(--border-strong); } }
+.act:active { transform: scale(.98); }
+.act .ico { width: 38px; height: 38px; border-radius: var(--r-s); display: grid; place-items: center; color: var(--tone, var(--accent));
+  background: color-mix(in srgb, var(--tone, var(--accent)) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone, var(--accent)) 24%, transparent); }
+.act .ico svg { width: 20px; height: 20px; }
+.act b { display: block; font-weight: 600; font-size: var(--fs-m); line-height: 1.25; }
+.act small { display: block; color: var(--text-2); font-size: var(--fs-xs); margin-top: 2px; line-height: 1.3; }
+.act.danger { --tone: var(--crit); } .act.warn { --tone: var(--warn); } .act.violet { --tone: var(--accent-2); }
+.act[disabled] { opacity: .4; pointer-events: none; }
+.act.busy .ico svg { visibility: hidden; }
+.act.busy .ico::after { content: ""; position: absolute; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--tone, var(--accent)); border-right-color: transparent; animation: pp-spin .7s linear infinite; }
+.act.busy .ico { position: relative; }
+@media (max-width: 560px) {
+  .acts, .acts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+  .act { grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--sp-3); padding: var(--sp-3); min-height: 104px; }
+}
+
+/* ================================================================ Modal (AnimatedModal) va toast */
+.overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: var(--sp-5); background: var(--overlay);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); animation: pp-fade var(--dur-2) var(--ease-out); }
+[data-ui="once"] .overlay { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.modal { position: relative; width: 100%; max-width: 460px; max-height: min(86dvh, 760px); overflow: auto; padding: var(--sp-6);
+  background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--r-xl); box-shadow: var(--sh-2);
+  -webkit-backdrop-filter: var(--glass-filter-strong); backdrop-filter: var(--glass-filter-strong); animation: pp-pop var(--dur-3) var(--ease-out); }
+[data-ui="aurora"] .modal { background: linear-gradient(180deg, rgba(36, 48, 98, .78), rgba(18, 24, 52, .9)); }
+.modal.wide { max-width: 900px; }
+.modal h2 { font-size: var(--fs-xl); font-weight: 620; letter-spacing: -.02em; font-stretch: var(--wd-heading); margin-bottom: var(--sp-2); }
+.modal p { color: var(--text-2); margin-bottom: var(--sp-5); }
+.modal .close { position: absolute; top: var(--sp-3); right: var(--sp-3); }
+@media (max-width: 560px) {
+  .overlay { place-items: end stretch; padding: 0; }
+  .modal { max-width: none; border-radius: var(--r-xl) var(--r-xl) 0 0; padding: var(--sp-6) var(--sp-5) calc(var(--sp-6) + env(safe-area-inset-bottom)); animation-name: pp-rise; }
+  .modal.wide { max-height: 90dvh; }
+}
+.toasts { position: fixed; z-index: 90; right: var(--sp-6); bottom: var(--sp-6); display: grid; gap: var(--sp-2); width: min(92vw, 380px); pointer-events: none; }
+.toast { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-3); align-items: center; padding: var(--sp-3) var(--sp-4); border-radius: var(--r-m);
+  background: var(--surface-2); border: 1px solid var(--border-strong); box-shadow: var(--sh-2); font-weight: 540; font-size: var(--fs-m); pointer-events: auto;
+  -webkit-backdrop-filter: var(--glass-filter-strong); backdrop-filter: var(--glass-filter-strong); animation: pp-rise var(--dur-3) var(--ease-out); }
+[data-ui="aurora"] .toast { background: rgba(22, 30, 64, .9); }
+.toast svg { width: 18px; height: 18px; color: var(--text-2); }
+.toast.ok svg { color: var(--ok); } .toast.err svg { color: var(--crit); }
+@media (max-width: 860px) { .toasts { left: 50%; right: auto; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom)); } }
+
+/* ================================================================ Skelet (yuklanish) */
+.skel { border-radius: var(--r-s); background: linear-gradient(90deg, var(--track) 25%, color-mix(in srgb, var(--text) 9%, transparent) 50%, var(--track) 75%);
+  background-size: 200% 100%; animation: pp-shimmer 1.4s linear infinite; }
+
+/* ================================================================ Boʻsh holat */
+.empty { display: grid; justify-items: center; text-align: center; gap: var(--sp-3); padding: var(--sp-8) var(--sp-5); }
+.empty .ico { width: 56px; height: 56px; border-radius: var(--r-m); display: grid; place-items: center; color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent); }
+.empty .ico svg { width: 26px; height: 26px; }
+.empty p { color: var(--text-2); max-width: 48ch; }
