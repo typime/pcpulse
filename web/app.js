@@ -96,6 +96,7 @@ const ic = (n, cls = "") => `<svg class="${cls}" width="20" height="20" viewBox=
 
 // =================================================================== holat
 const S = {
+  power: loadPower(),  // { [deviceId]: { kind: "wake"|"shutdown"|"restart"|"sleep"|"hibernate"|"logoff", at, via } } — soʻnggi quvvat buyrugʻi
   token: localStorage.getItem("pcp_token") || "",
   user: null,
   devices: [],
@@ -164,6 +165,55 @@ async function runCommand(name, args) {
   }
   throw new Error("Kompyuter javob bermadi");
 }
+
+// ---- quvvat buyruqlari holati: yoqish signali yuborilgach kutish, oʻchirilgach sababini koʻrsatish
+const POWER_TTL = 15 * 60 * 1000, WAKE_HINT_AFTER = 180;
+function loadPower() {
+  try {
+    const v = JSON.parse(localStorage.getItem("pp_power") || "{}"), now = Date.now();
+    for (const k in v) if (!v[k] || now - v[k].at > 15 * 60 * 1000) delete v[k];  // S yaratilayotganda chaqiriladi — POWER_TTL hali yoʻq
+    return v;
+  } catch { return {}; }
+}
+function markPower(kind, extra = {}) {
+  S.power[S.devId] = { kind, at: Date.now(), ...extra };
+  try { localStorage.setItem("pp_power", JSON.stringify(S.power)); } catch { /* maxfiy rejim */ }
+}
+function clearPower(id) {
+  delete S.power[id];
+  try { localStorage.setItem("pp_power", JSON.stringify(S.power)); } catch { /* maxfiy rejim */ }
+}
+function powerNote(d) {
+  const p = S.power[d.id];
+  if (!p || Date.now() - p.at > POWER_TTL) return "";
+  const t = hhmm(p.at / 1000), el = (Date.now() - p.at) / 1000;
+  const timer = `<b data-elapsed="${p.at}">${fmtCountdown(el)}</b>`;
+  if (p.kind === "wake") {
+    if (el < WAKE_HINT_AFTER) return `<div class="note info">Yoqish signali ${t} da${p.via && p.via.length ? ` ${esc(p.via.join(", "))} orqali` : ""} yuborildi. Kutilmoqda: ${timer} — odatda 30–90 soniya.</div>`;
+    return `<div class="note">Kompyuter hali yoqilmadi. Tekshiring: BIOS’da Wake-on-LAN (“Power On By PCI-E”) yoqilganmi, Windows’da “Tezkor ishga tushirish” (Fast startup) oʻchirilganmi, kompyuter kabel orqali ulangan va elektrdan uzilmaganmi.
+      <div class="row" style="margin-top:10px"><button class="btn sm ${S.busy.wake ? "busy" : ""}" data-act="wake">${ic("zap")}Qayta yuborish</button></div></div>`;
+  }
+  if (p.kind === "restart") return `<div class="note info">Kompyuter ${t} da qayta yuklashga yuborildi — odatda 1–2 daqiqada qaytadi. Oʻtdi: ${timer}</div>`;
+  const what = { shutdown: "oʻchirildi", sleep: "uyqu rejimiga oʻtkazildi", hibernate: "gibernatsiyaga oʻtkazildi", logoff: "tizimdan chiqarildi" }[p.kind];
+  return what ? `<div class="note info">Kompyuter ${t} da siz tomoningizdan ${what}.</div>` : "";
+}
+function wakeHelp(d) {
+  const p = S.power[d.id];
+  if (p && p.kind === "wake" && (Date.now() - p.at) / 1000 < WAKE_HINT_AFTER) return "";  // signal yuborilgan — kutish izohi yetarli
+  if (!d.mac) return `<p class="sub" style="margin:10px 0 0">MAC manzil hali nomaʼlum — kompyuter agent bilan bir marta ulansin yoki uni Sozlamalarda kiriting.</p>`;
+  const relays = S.devices.filter((x) => x.id !== d.id && x.online).map((x) => x.name);
+  return `<p class="sub" style="margin:10px 0 0">${relays.length
+    ? `Signalni ${esc(relays.join(", "))} yuboradi — u shu kompyuter bilan bitta uy tarmogʻida boʻlishi kerak.`
+    : "Yoqish signalini uy tarmogʻidagi yoniq boshqa qurilma (agent) yuboradi — hozir onlayn qurilma yoʻq."}</p>`;
+}
+// har soniyada: kutish vaqtini yangilash; maslahat chiqadigan payt kelganda sahifani qayta chizish
+let powerHintShown = false;
+setInterval(() => {
+  for (const el of document.querySelectorAll("[data-elapsed]")) el.textContent = fmtCountdown((Date.now() - Number(el.dataset.elapsed)) / 1000);
+  const p = S.power[S.devId];
+  const late = !!(p && p.kind === "wake" && !S.online && (Date.now() - p.at) / 1000 >= WAKE_HINT_AFTER);
+  if (late !== powerHintShown) { powerHintShown = late; if (S.user) render(); }
+}, 1000);
 
 async function cmd(name, args = {}, { busy, ok } = {}) {
   const key = busy || name;
@@ -244,9 +294,9 @@ function view() {
   let html = !S.token || !S.user ? (S.token ? loadingView() : authView()) : shellView();
   html += modalView() + `<div class="toasts" role="status">${S.toasts.map((t) => `<div class="toast ${t.kind}" data-key="${t.id}">${esc(t.text)}</div>`).join("")}</div>`;
   html += `<svg width="0" height="0" style="position:absolute"><defs>
-    <linearGradient id="gCool" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#5ee1d9" stop-opacity=".35"/><stop offset="1" stop-color="#5ee1d9" stop-opacity="0"/></linearGradient>
-    <linearGradient id="gLilac" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#a99bff" stop-opacity=".35"/><stop offset="1" stop-color="#a99bff" stop-opacity="0"/></linearGradient>
-    <linearGradient id="gWarm" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f5b454" stop-opacity=".35"/><stop offset="1" stop-color="#f5b454" stop-opacity="0"/></linearGradient>
+    <linearGradient id="gCool" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style="stop-color:var(--cool)" stop-opacity=".35"/><stop offset="1" style="stop-color:var(--cool)" stop-opacity="0"/></linearGradient>
+    <linearGradient id="gLilac" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style="stop-color:var(--lilac)" stop-opacity=".35"/><stop offset="1" style="stop-color:var(--lilac)" stop-opacity="0"/></linearGradient>
+    <linearGradient id="gWarm" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style="stop-color:var(--warm)" stop-opacity=".35"/><stop offset="1" style="stop-color:var(--warm)" stop-opacity="0"/></linearGradient>
   </defs></svg>`;
   return html;
 }
@@ -335,8 +385,9 @@ function waitingView() {
   return `<section class="g hero">
     <div><h1>${ls ? "Kompyuter oflayn" : "Maʼlumot kutilmoqda"}</h1>
     <p class="lead">${ls ? `Oxirgi aloqa: ${fmtAgo(ls)}. Kompyuter oʻchiq, uyquda yoki internetga ulanmagan.` : "Agent hali maʼlumot yubormadi. Kompyuterda agent ishlayotganini tekshiring."}</p>
-    <div class="row">${ls ? `<button class="btn pri ${S.busy.wake ? "busy" : ""}" data-act="wake">${ic("zap")}Kompyuterni yoqish</button>` : ""}
-    <a class="btn" href="#/control">Boshqaruv</a></div></div>
+    ${ls ? powerNote(d) : ""}
+    <div class="row" style="margin-top:14px">${ls ? `<button class="btn pri ${S.busy.wake ? "busy" : ""}" data-act="wake" ${d.mac ? "" : "disabled"}>${ic("zap")}Kompyuterni yoqish</button>` : ""}
+    <a class="btn" href="#/control">Boshqaruv</a></div>${ls ? wakeHelp(d) : ""}</div>
     <div class="ringwrap">${ring(0, "na", "—")}</div>
   </section>${eventsCard(6)}`;
 }
@@ -366,7 +417,7 @@ function barH(pct, cls = "") {
 }
 
 const chartW = () => (innerWidth < 600 ? 360 : innerWidth < 1200 ? 640 : 760);
-function lineChart(ts, vals, { max, unit = "", color = "#5ee1d9" } = {}) {
+function lineChart(ts, vals, { max, unit = "", color = "var(--cool)" } = {}) {
   const W = chartW(), H = innerWidth < 600 ? 200 : 180, L = 34, B = 22, T = 8;
   const pts = ts.map((t, i) => [t, vals[i]]).filter((p) => num(p[1]));
   if (pts.length < 2) return `<div class="sub" style="padding:40px 0;text-align:center">Hali yetarli maʼlumot yoʻq — grafik bir necha daqiqadan soʻng paydo boʻladi.</div>`;
@@ -381,7 +432,7 @@ function lineChart(ts, vals, { max, unit = "", color = "#5ee1d9" } = {}) {
   let xl = "";
   for (let t = Math.ceil(t0 / step) * step; t <= t1; t += step) xl += `<text x="${x(t)}" y="${H - 5}" text-anchor="middle">${step >= 86400 ? `${new Date(t * 1000).getDate()}-${MONTHS[new Date(t * 1000).getMonth()].slice(0, 3)}` : hhmm(t)}</text>`;
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafik"><g class="grid">${grid}</g>${xl}
-    <path class="l" d="${d}" stroke="${color}"/><text x="${W - 4}" y="${T + 10}" text-anchor="end">${esc(unit)}</text></svg>`;
+    <path class="l" d="${d}" style="stroke:${color}"/><text x="${W - 4}" y="${T + 10}" text-anchor="end">${esc(unit)}</text></svg>`;
 }
 
 // =================================================================== UMUMIY
@@ -446,7 +497,7 @@ function metricsCard() {
   const M = S.metrics;
   const opts = [["cpu_temp", "CPU °C"], ["gpu_temp", "GPU °C"], ["cpu_load", "CPU %"], ["ram", "RAM %"], ["power", "Vatt"]];
   const k = S.sub.metric;
-  const colors = { cpu_temp: "#5ee1d9", gpu_temp: "#a99bff", cpu_load: "#5ee1d9", ram: "#f5b454", power: "#72e6a8" };
+  const colors = { cpu_temp: "var(--cool)", gpu_temp: "var(--lilac)", cpu_load: "var(--cool)", ram: "var(--warm)", power: "var(--ok)" };
   const body = M ? lineChart(M.ts, M[k] || [], { max: k === "cpu_load" || k === "ram" ? 100 : undefined, unit: opts.find((o) => o[0] === k)[1], color: colors[k] })
     : `<div class="sub" style="padding:40px 0;text-align:center">Yuklanmoqda…</div>`;
   return `<section class="g pad"><div class="row between" style="margin-bottom:10px"><h3 style="margin:0">Oxirgi 24 soat</h3>
@@ -638,8 +689,8 @@ function powerView() {
     const txt = { ok: "meʼyorida", warn: "chegarada", crit: "meʼyordan chetda", info: "sensor masshtabi notoʻgʻri boʻlishi mumkin" }[lvl];
     const pos = clamp(50 + dev * 5, 2, 98);
     return `<div class="li" data-key="v-${esc(v.id)}" style="grid-template-columns:minmax(0,1fr) auto"><div><div class="t">${esc(v.name)} <span class="sub">(meʼyor ${v.nom} V${v.nom === 3 ? ", CMOS batareya" : " ±5%"})</span></div>
-      <div style="position:relative;height:6px;border-radius:6px;margin-top:8px;background:linear-gradient(90deg,rgba(255,107,107,.35) 0 25%,rgba(114,230,168,.35) 25% 75%,rgba(255,107,107,.35) 75%)">
-        <i style="position:absolute;top:-4px;left:calc(${pos}% - 2px);width:4px;height:14px;border-radius:2px;background:#fff"></i></div>
+      <div style="position:relative;height:6px;border-radius:6px;margin-top:8px;background:linear-gradient(90deg,color-mix(in srgb,var(--hot) 35%,transparent) 0 25%,color-mix(in srgb,var(--ok) 35%,transparent) 25% 75%,color-mix(in srgb,var(--hot) 35%,transparent) 75%)">
+        <i style="position:absolute;top:-4px;left:calc(${pos}% - 2px);width:4px;height:14px;border-radius:2px;background:var(--text)"></i></div>
       <div class="sub" style="margin-top:6px"><span class="dot ${lvl}" style="display:inline-block;margin-right:6px"></span>${txt}${v.nom !== 3 ? ` · ${dev >= 0 ? "+" : ""}${dev.toFixed(1)}%` : ""}</div></div>
       <div class="mid">${v.value.toFixed(v.value < 10 ? 3 : 2)}<span class="unit">V</span></div></div>`;
   };
@@ -674,7 +725,7 @@ const TIPS = [
   [/^(onedrive|dropbox|googledrivefs)/, "Bulut sinxronizatsiyasi: katta papkalarni “faqat onlayn” rejimga oʻtkazing."],
 ];
 const tipFor = (name) => { const n = String(name || "").toLowerCase(); const t = TIPS.find(([re]) => re.test(n)); return t ? t[1] : ""; };
-const PALETTE = ["#5ee1d9", "#a99bff", "#f5b454", "#72e6a8", "#ff8fa3", "#7cb4ff"];
+const PALETTE = ["var(--cool)", "var(--lilac)", "var(--warm)", "var(--ok)", "var(--pink)", "var(--blue)"];
 
 function procsView() {
   const L = S.live;
@@ -695,8 +746,8 @@ function procsView() {
   }).join("");
   return `
   <section class="g pad"><div class="row between"><div><h3 style="margin:0 0 2px">Operativ xotira</h3><div class="sub">${fmtB(ram.used)} band, ${fmtB(ram.avail)} boʻsh · jami ${fmtB(ram.total)}</div></div><div class="big">${r0(ram.percent)}<span class="unit">%</span></div></div>
-    <div class="stackbar" style="margin-top:14px">${stack}<i style="width:${((rest / ram.total) * 100).toFixed(2)}%;background:rgba(255,255,255,.22)"></i></div>
-    <div class="legend">${top5.map((p, i) => `<span><i style="background:${PALETTE[i]}"></i>${esc(p.title)} ${fmtB(p.mem)}</span>`).join("")}<span><i style="background:rgba(255,255,255,.22)"></i>Boshqalar ${fmtB(rest)}</span></div>
+    <div class="stackbar" style="margin-top:14px">${stack}<i style="width:${((rest / ram.total) * 100).toFixed(2)}%;background:var(--fill-rest)"></i></div>
+    <div class="legend">${top5.map((p, i) => `<span><i style="background:${PALETTE[i]}"></i>${esc(p.title)} ${fmtB(p.mem)}</span>`).join("")}<span><i style="background:var(--fill-rest)"></i>Boshqalar ${fmtB(rest)}</span></div>
   </section>
   ${fixCard()}
   <section class="g pad"><div class="row between" style="margin-bottom:6px"><h3 style="margin:0">Dasturlar</h3>
@@ -783,7 +834,9 @@ function controlView() {
   const L = S.live, d = S.devices.find((x) => x.id === S.devId) || {};
   if (!L || !S.online) {
     return `<section class="g hero"><div><h1>Kompyuter oflayn</h1><p class="lead">Wake-on-LAN orqali masofadan yoqish mumkin${d.mac ? ` (MAC ${esc(d.mac)})` : ""}. Buning uchun BIOS va tarmoq kartasida WOL yoqilgan, kompyuter esa kabel orqali ulangan boʻlishi kerak.</p>
-      <div class="row"><button class="btn pri ${S.busy.wake ? "busy" : ""}" data-act="wake" ${d.mac ? "" : "disabled"}>${ic("zap")}Kompyuterni yoqish</button><a class="btn" href="#/settings">WOL sozlamalari</a></div></div></section>${eventsCard(8)}`;
+      ${powerNote(d)}
+      <div class="row" style="margin-top:14px"><button class="btn pri ${S.busy.wake ? "busy" : ""}" data-act="wake" ${d.mac ? "" : "disabled"}>${ic("zap")}Kompyuterni yoqish</button><a class="btn" href="#/settings">WOL sozlamalari</a></div>
+      ${wakeHelp(d)}</div></section>${eventsCard(8)}`;
   }
   const caps = L.caps || {}, st = (S.dev && S.dev.settings) || {};
   const a = (act, icon, t, s, cls = "", dis = false) => `<button class="act ${cls} ${S.busy[act] ? "busy" : ""}" data-act="${act}" ${dis ? "disabled" : ""}>${ic(icon)}<span>${t}<small>${s}</small></span></button>`;
@@ -872,7 +925,7 @@ function settingsView() {
   }[push];
   const sw = (k, on, sub) => `<label class="switch"><input type="checkbox" data-change="userSetting" data-k="${k}" ${on ? "checked" : ""}><span></span></label>`;
   const numIn = (k, v, min, max) => `<input class="in" type="number" min="${min}" max="${max}" value="${v}" style="width:96px" data-change="alertSetting" data-k="${k}">`;
-  const devs = S.devices.map((d) => `<div class="g pad" data-key="dev-${d.id}" style="background:rgba(255,255,255,.03)">
+  const devs = S.devices.map((d) => `<div class="g pad" data-key="dev-${d.id}" style="background:var(--fill-soft)">
       <div class="row between"><div><b>${esc(d.name)}</b> <span class="sub"><span class="dot ${d.online ? "on" : ""}" style="display:inline-block;margin:0 6px 0 4px"></span>${d.online ? "onlayn" : `oflayn · ${fmtAgo(d.last_seen)}`}</span></div>
       <button class="btn sm danger" data-act="devDelete" data-id="${d.id}" data-name="${esc(d.name)}">${ic("trash")}Oʻchirish</button></div>
       <form data-submit="devSave" data-keep data-id="${d.id}" class="grid2" style="margin-top:12px;gap:10px">
@@ -883,7 +936,19 @@ function settingsView() {
         <div><button class="btn sm" type="submit">Saqlash</button> ${d.mac_manual ? `<span class="sub">qoʻlda kiritilgan</span>` : `<span class="sub">agentdan avtomatik</span>`}</div>
       </form></div>`).join("");
   const st = (S.dev && S.dev.settings) || {};
+  const { ui, mode } = uiPref();
+  const themeOpt = (v, t, sub) => `<button type="button" class="theme-opt ${ui === v ? "on" : ""}" role="radio" aria-checked="${ui === v}" data-act="setUi" data-v="${v}">
+      <div class="theme-prev ${v}" aria-hidden="true"><i></i><i></i><i></i></div><div><b>${t}</b><div class="sub">${sub}</div></div></button>`;
   return `
+  <section class="g pad"><h3>Koʻrinish</h3>
+    <div class="themes" role="radiogroup" aria-label="Mavzu">
+      ${themeOpt("once", "Once UI", "Toza va aniq — asosiy mavzu")}
+      ${themeOpt("glass", "Glassmorphism", "Shaffof panellar, fon haroratga qarab oʻzgaradi")}
+    </div>
+    ${ui === "once" ? `<div class="setrow" style="margin-top:8px"><div><b>Rejim</b><div class="sub">Tizim — telefon yoki kompyuter sozlamasiga ergashadi</div></div>
+      <div class="seg" role="radiogroup" aria-label="Rejim">${[["dark", "Qorongʻi"], ["light", "Yorugʻ"], ["system", "Tizim"]].map(([v, t]) => `<button type="button" class="${mode === v ? "on" : ""}" role="radio" aria-checked="${mode === v}" data-act="setMode" data-v="${v}">${t}</button>`).join("")}</div></div>` : ""}
+    <div class="sub" style="margin-top:10px">Koʻrinish faqat shu qurilmada saqlanadi — telefon va kompyuterda har xil tanlash mumkin.</div>
+  </section>
   <div class="grid2">
   <section class="g pad"><h3>Bildirishnomalar</h3>
     <div class="setrow"><div><b>Push bildirishnomalar</b><div class="sub">${esc(pushTxt)}</div></div>
@@ -961,19 +1026,25 @@ const ACT = {
   authMode: (el) => { S.form.authMode = el.dataset.v; S.form.authErr = ""; render(); },
   sub: (el) => { S.sub[el.dataset.p] = el.dataset.v; render(); },
   metric: (el) => { S.sub.metric = el.dataset.v; render(); },
+  setUi: (el) => setUiPref("pp_ui", el.dataset.v),
+  setMode: (el) => setUiPref("pp_mode", el.dataset.v),
   modalClose: (el, e) => { if (e.target.closest("[data-stop]") && el.classList.contains("overlay")) return; S.modal = null; render(); },
   modalOk: () => { const m = S.modal; S.modal = null; render(); m && m.onOk && m.onOk(); },
   wake: async () => {
     S.busy.wake = true; render();
-    try { const r = await rpc("pp_wake", { p_device: S.devId }); toast(`Yoqish signali yuborildi (${r.sent_from.join(", ")} orqali). 1–2 daqiqa kuting.`, "ok"); }
+    try {
+      const r = await rpc("pp_wake", { p_device: S.devId });
+      markPower("wake", { via: r.sent_from || [] });
+      toast(`Yoqish signali yuborildi (${(r.sent_from || []).join(", ")} orqali)`, "ok");
+    }
     catch (e) { toast(e.message, "err"); } finally { delete S.busy.wake; render(); }
   },
   lock: () => cmd("lock", {}, { busy: "lock", ok: "Ekran qulflandi" }),
-  sleep: () => confirmBox("Uyqu rejimi", "Kompyuter uyqu rejimiga oʻtadi. Yana yoqish uchun Wake-on-LAN yoki kompyuterdagi tugmadan foydalaning.", "Uxlatish", false, () => cmd("sleep", {}, { busy: "sleep", ok: "Uyqu rejimiga oʻtkazilmoqda" })),
-  hibernate: () => confirmBox("Gibernatsiya", "Ochiq dasturlar diskka saqlanib, kompyuter oʻchadi.", "Davom etish", false, () => cmd("hibernate", {}, { busy: "hibernate", ok: "Gibernatsiyaga oʻtkazilmoqda" })),
-  restart: () => confirmBox("Qayta yoqish", "Kompyuter 5 soniyadan soʻng qayta yuklanadi. Saqlanmagan ishlar yoʻqolishi mumkin.", "Qayta yoqish", true, () => cmd("restart", { delay: 5 }, { busy: "restart", ok: "Qayta yuklanmoqda" })),
-  shutdown: () => confirmBox("Kompyuterni oʻchirish", "Kompyuter 5 soniyadan soʻng oʻchadi. Saqlanmagan ishlar yoʻqolishi mumkin.", "Oʻchirish", true, () => cmd("shutdown", { delay: 5 }, { busy: "shutdown", ok: "Kompyuter oʻchirilmoqda" })),
-  logoff: () => confirmBox("Tizimdan chiqish", "Windows sessiyasi yopiladi, ochiq dasturlar yopiladi.", "Chiqish", true, () => cmd("logoff", {}, { busy: "logoff", ok: "Tizimdan chiqilmoqda" })),
+  sleep: () => confirmBox("Uyqu rejimi", "Kompyuter uyqu rejimiga oʻtadi. Yana yoqish uchun Wake-on-LAN yoki kompyuterdagi tugmadan foydalaning.", "Uxlatish", false, () => cmd("sleep", {}, { busy: "sleep", ok: "Uyqu rejimiga oʻtkazilmoqda" }).then(() => markPower("sleep"), () => {})),
+  hibernate: () => confirmBox("Gibernatsiya", "Ochiq dasturlar diskka saqlanib, kompyuter oʻchadi.", "Davom etish", false, () => cmd("hibernate", {}, { busy: "hibernate", ok: "Gibernatsiyaga oʻtkazilmoqda" }).then(() => markPower("hibernate"), () => {})),
+  restart: () => confirmBox("Qayta yoqish", "Kompyuter 5 soniyadan soʻng qayta yuklanadi. Saqlanmagan ishlar yoʻqolishi mumkin.", "Qayta yoqish", true, () => cmd("restart", { delay: 5 }, { busy: "restart", ok: "Qayta yuklanmoqda" }).then(() => markPower("restart"), () => {})),
+  shutdown: () => confirmBox("Kompyuterni oʻchirish", "Kompyuter 5 soniyadan soʻng oʻchadi. Saqlanmagan ishlar yoʻqolishi mumkin.", "Oʻchirish", true, () => cmd("shutdown", { delay: 5 }, { busy: "shutdown", ok: "Kompyuter oʻchirilmoqda" }).then(() => markPower("shutdown"), () => {})),
+  logoff: () => confirmBox("Tizimdan chiqish", "Windows sessiyasi yopiladi, ochiq dasturlar yopiladi.", "Chiqish", true, () => cmd("logoff", {}, { busy: "logoff", ok: "Tizimdan chiqilmoqda" }).then(() => markPower("logoff"), () => {})),
   cancelShutdown: () => cmd("cancel_shutdown", {}, { ok: "Oʻchirish bekor qilindi" }),
   guardArm: () => cmd("guard_arm", {}, { busy: "guardArm", ok: "Qoʻriqlash yoqilmoqda — kompyuterdan uzoqlashing" }),
   guardLock: () => cmd("guard_arm", { lock: true }, { busy: "guardLock", ok: "Ekran qulflandi va kuzatilmoqda" }),
@@ -1230,7 +1301,16 @@ function onLive(m) {
   } else if (m.type === "status") { S.online = m.online; S.lastSeen = m.last_seen; }
   const d = S.devices.find((x) => x.id === S.devId);
   if (d) { d.online = S.online; d.last_seen = S.lastSeen; }
-  if (wasOnline !== S.online) loadEvents();
+  if (wasOnline !== S.online) {
+    loadEvents();
+    const p = S.power[S.devId];
+    if (S.online && wasOnline === false && p) {
+      if (p.kind !== "logoff") toast(p.kind === "wake" ? "Kompyuter yoqildi" : "Kompyuter yana onlayn", "ok");
+      clearPower(S.devId);
+    }
+  }
+  const pOld = S.power[S.devId];
+  if (S.online && pOld && Date.now() - pOld.at > 180000) clearPower(S.devId);  // allaqachon qaytgan — eski yozuv kerak emas
   updateHeat();
   render();
 }
@@ -1240,6 +1320,28 @@ function pushHist(L) {
   H.cpuT.push((L.cpu || {}).temp); H.gpuT.push(g.temp);
   for (const k in H) if (H[k].length > 90) H[k].shift();
 }
+
+// ---- koʻrinish: Once UI (asosiy) yoki Glassmorphism; rejim: qorongʻi / yorugʻ / tizim. Faqat shu qurilmada saqlanadi.
+const mqLight = matchMedia("(prefers-color-scheme: light)");
+function uiPref() {
+  let ui = "once", mode = "dark";
+  try { ui = localStorage.getItem("pp_ui") === "glass" ? "glass" : "once"; mode = localStorage.getItem("pp_mode") || "dark"; } catch { /* maxfiy rejim */ }
+  return { ui, mode: ["dark", "light", "system"].includes(mode) ? mode : "dark" };
+}
+function applyUi() {
+  const { ui, mode } = uiPref(), d = document.documentElement;
+  const light = ui === "once" && (mode === "light" || (mode === "system" && mqLight.matches));
+  d.setAttribute("data-ui", ui);
+  d.setAttribute("data-theme", light ? "light" : "dark");
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = ui === "glass" ? "#0b1322" : light ? "#f9f9f9" : "#0a0a0a";
+}
+function setUiPref(k, v) {
+  try { localStorage.setItem(k, v); } catch { /* maxfiy rejim — faqat shu sessiyada */ }
+  applyUi();
+  render();
+}
+if (mqLight.addEventListener) mqLight.addEventListener("change", () => { if (uiPref().mode === "system") applyUi(); });
 
 const HEAT = {
   off: ["#2b3a55", "#1d2a40", "#3b4a66"],
@@ -1259,8 +1361,7 @@ function updateHeat() {
   const [a, b, c] = HEAT[band];
   const st = document.documentElement.style;
   st.setProperty("--heat-a", a); st.setProperty("--heat-b", b); st.setProperty("--heat-c", c);
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = "#0b1322";
+  applyUi();
 }
 
 document.addEventListener("visibilitychange", () => {

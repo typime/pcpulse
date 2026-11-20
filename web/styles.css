@@ -1,4 +1,5 @@
-/* PC Pulse — minimal glassmorphism. Fon rangi kompyuter haroratiga qarab oʻzgaradi (--heat-*). */
+/* PC Pulse — asosiy uslublar va Glassmorphism mavzusi (data-ui="glass"). Fon rangi kompyuter haroratiga qarab oʻzgaradi (--heat-*).
+   Once UI mavzusi bu qoidalarning ranglari va sirtlarini theme-once.css da almashtiradi. */
 :root {
   --ink: #0b1322;
   --ink-2: #0f1a31;
@@ -14,6 +15,10 @@
   --warm: #f5b454;
   --hot: #ff6b6b;
   --lilac: #a99bff;
+  --pink: #ff8fa3;
+  --blue: #7cb4ff;
+  --fill-rest: rgba(255, 255, 255, .22);
+  --fill-soft: rgba(255, 255, 255, .03);
   --heat-a: #1d4ed8;
   --heat-b: #0e9f9a;
   --heat-c: #5b45d6;
@@ -41,12 +46,11 @@ a { color: var(--cool); }
 .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden;
   background: radial-gradient(1100px 700px at 12% -8%, #172a52 0%, transparent 62%), linear-gradient(165deg, #0b1322, #0e1830 58%, #0a111e); }
 .bg i { position: absolute; border-radius: 50%; filter: blur(96px); opacity: .5;
-  transition: background-color 3s ease; animation: drift 40s ease-in-out infinite alternate; }
+  transition: background-color 3s ease; }
 .bg i:nth-child(1) { width: 52vmax; height: 52vmax; top: -18vmax; left: -14vmax; background-color: var(--heat-a); }
 .bg i:nth-child(2) { width: 46vmax; height: 46vmax; bottom: -20vmax; right: -12vmax; background-color: var(--heat-b); animation-duration: 52s; }
 .bg i:nth-child(3) { width: 30vmax; height: 30vmax; top: 34%; left: 48%; background-color: var(--heat-c); opacity: .32; animation-duration: 63s; }
-@keyframes drift { to { transform: translate3d(6vmax, 4vmax, 0) scale(1.08); } }
-@media (prefers-reduced-motion: reduce) { .bg i { animation: none; } * { transition-duration: 0s !important; } }
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0s !important; animation-duration: 0s !important; } }
 
 /* ---------- shisha ---------- */
 .g { background: var(--glass); border: 1px solid var(--line); border-radius: var(--r-card);
@@ -85,7 +89,8 @@ a { color: var(--cool); }
   .main { padding: 14px 14px calc(104px + env(safe-area-inset-bottom)); padding-top: calc(14px + env(safe-area-inset-top)); }
   .top h2 { font-size: 20px; }
   .tabbar { position: fixed; z-index: 30; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom));
-    display: flex; justify-content: space-around; padding: 6px; border-radius: 24px; }
+    display: flex; justify-content: space-around; padding: 6px; border-radius: 24px;
+    background: rgba(12, 20, 36, .92); box-shadow: 0 10px 30px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .07); }
   .tabbar a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 2px 5px;
     border-radius: 18px; color: var(--muted); text-decoration: none; font-size: 11px; font-weight: 700; }
   .tabbar a.on { color: var(--text); background: var(--glass-hi); }
