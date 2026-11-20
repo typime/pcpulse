@@ -1,0 +1,30 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.scrollContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.slide {
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .carouselContainer:hover .navButton, .carouselContainer:focus-within .navButton {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.navButton {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+@media (hover: none) {
+  .navButton {
+    display: none;
+  }
+}
+}

@@ -1,0 +1,207 @@
+@charset "UTF-8";
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+/* Touch helpers for component modules. Emits no CSS of its own. */
+/*
+ * Grows the area that takes a tap to `--touch-target` (44px) on a coarse
+ * pointer, without changing the size the control is drawn at or the layout
+ * around it. An invisible pseudo-element, centred on the control and at least
+ * as big as it, catches the tap; a tap on it is a tap on the control.
+ *
+ * The control must be positioned (every Flex is) and must not clip its own
+ * overflow, and the pseudo-element must be free. A control drawn larger than
+ * the target keeps its own size, so the rule is harmless on big buttons.
+ *
+ * Two areas that overlap give the overlap to the later control, so this is
+ * for controls that stand apart, not for dense grids of dots.
+ */
+.container {
+  cursor: var(--cursor-interactive);
+  isolation: isolate;
+}
+.container:active .element {
+  transform: translateY(-50%) scaleX(1.2);
+}
+@media (hover: hover) {
+  .container:hover .switch {
+    background-color: var(--neutral-solid-strong);
+  }
+  .container:hover .switch.checked {
+    background-color: var(--brand-solid-strong);
+  }
+  .container:hover .switch.checked .element::before {
+    display: none;
+  }
+}
+
+.reverse {
+  flex-direction: row-reverse;
+}
+
+.switch {
+  box-shadow: inset 0 0 0 var(--solid-inset-color-brand);
+  border-color: var(--solid-border-color-neutral);
+  border-style: solid;
+  border-width: var(--solid-border-width);
+  width: var(--static-space-40);
+  min-width: var(--static-space-40);
+  height: var(--static-space-24);
+  border-radius: var(--radius-l-nest-4);
+  background-color: var(--neutral-solid-medium);
+  position: relative;
+  transition: var(--transition-micro-medium);
+}
+.switch.checked {
+  box-shadow: inset 0 var(--solid-inset-distance) var(--solid-inset-size) var(--solid-inset-color-brand), inset 0 1px 0 var(--solid-glow-rim), 0 0 calc(var(--solid-glow-near) * 0.8 * var(--solid-glow-boost, 1)) color-mix(in srgb, var(--brand-solid-medium) var(--solid-glow-near-mix), transparent), 0 0 calc(var(--solid-glow-far) * 0.8 * var(--solid-glow-boost, 1)) color-mix(in srgb, var(--brand-solid-medium) var(--solid-glow-far-mix), transparent);
+}
+@media (prefers-contrast: more) {
+  .switch.checked {
+    box-shadow: inset 0 var(--solid-inset-distance) var(--solid-inset-size) var(--solid-inset-color-brand);
+  }
+}
+.switch.checked {
+  background-color: var(--brand-solid-medium);
+  border-color: var(--solid-border-color-brand);
+}
+.switch.checked .element {
+  left: calc(100% - var(--static-space-20));
+  transform-origin: right;
+  background-color: var(--brand-on-solid-strong);
+  color: var(--brand-solid-medium);
+}
+
+.element {
+  z-index: 1;
+  transform-origin: left;
+  width: var(--static-space-16);
+  height: var(--static-space-16);
+  border-radius: var(--radius-l);
+  /* The thumb takes the on-solid colour of the track it sits on: neutral when
+     off, brand when on. The brand one is black in the inverse style, which
+     vanished on the grey off track. The spinner (currentColor) takes the
+     track colour so it reads as a cut-out of the thumb. */
+  background-color: var(--neutral-on-solid-strong);
+  color: var(--neutral-solid-medium);
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: var(--static-space-4);
+  transition: left 0.3s, transform 0.3s;
+  outline: none;
+}
+
+.disabled .switch {
+  opacity: 0.4;
+}
+.disabled .element::before {
+  display: none !important;
+}
+
+.element:focus-visible::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--static-space-40);
+  height: var(--static-space-40);
+  background-color: var(--brand-alpha-medium);
+  border-radius: var(--radius-full);
+  z-index: -1;
+  animation: scaleInCenter 0.2s forwards;
+}
+
+@media (hover: hover) {
+  .container:hover .element::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: var(--static-space-40);
+    height: var(--static-space-40);
+    background-color: var(--brand-alpha-medium);
+    border-radius: var(--radius-full);
+    z-index: -1;
+    animation: scaleInCenter 0.2s forwards;
+  }
+}
+@keyframes scaleInCenter {
+  from {
+    transform: translate(-50%, -50%) scale(0);
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+/* Sizes: m is the 40 × 24 track above. */
+.s .switch {
+  width: var(--static-space-32);
+  min-width: var(--static-space-32);
+  height: var(--static-space-20);
+}
+.s .switch.checked .element {
+  left: calc(100% - var(--static-space-16));
+}
+.s .element {
+  width: var(--static-space-12);
+  height: var(--static-space-12);
+}
+
+.l .switch {
+  width: var(--static-space-48);
+  min-width: var(--static-space-48);
+  height: 1.75rem;
+}
+.l .switch.checked .element {
+  left: calc(100% - var(--static-space-24));
+}
+.l .element {
+  width: var(--static-space-20);
+  height: var(--static-space-20);
+}
+
+/* No `size` (here or on a Form): m, or the theme density's s or l (density.scss). */
+:global(:where(html[data-density="compact"])) .auto .switch {
+  width: var(--static-space-32);
+  min-width: var(--static-space-32);
+  height: var(--static-space-20);
+}
+:global(:where(html[data-density="compact"])) .auto .switch.checked .element {
+  left: calc(100% - var(--static-space-16));
+}
+:global(:where(html[data-density="compact"])) .auto .element {
+  width: var(--static-space-12);
+  height: var(--static-space-12);
+}
+:global(:where(html[data-density="spacious"])) .auto .switch {
+  width: var(--static-space-48);
+  min-width: var(--static-space-48);
+  height: 1.75rem;
+}
+:global(:where(html[data-density="spacious"])) .auto .switch.checked .element {
+  left: calc(100% - var(--static-space-24));
+}
+:global(:where(html[data-density="spacious"])) .auto .element {
+  width: var(--static-space-20);
+  height: var(--static-space-20);
+}
+
+/* `error` / `errorMessage`: the danger border Input draws. */
+.error .switch:not(.checked) {
+  border-color: var(--danger-border-medium);
+  box-shadow: 0 0 0 1px var(--danger-border-medium);
+}
+
+@media (pointer: coarse) {
+  .switch::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--touch-target, 2.75rem));
+    height: max(100%, var(--touch-target, 2.75rem));
+    transform: translate(-50%, -50%);
+  }
+}
+}

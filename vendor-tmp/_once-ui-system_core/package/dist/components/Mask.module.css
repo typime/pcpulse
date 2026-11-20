@@ -1,0 +1,7 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.mask {
+  mask-size: 100% 100%;
+  mask-image: radial-gradient(var(--mask-radius) at var(--mask-position-x) var(--mask-position-y), black clamp(0%, 100% - var(--mask-feather, 100%) - 1px, 100%), transparent 100%);
+}
+}

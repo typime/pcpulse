@@ -1,0 +1,225 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.timeline {
+  --timeline-node: 14px;
+  --timeline-marker: 32px;
+  --timeline-row: 24px;
+  --timeline-rail: 1px;
+}
+
+.size-xs {
+  --timeline-node: 10px;
+  --timeline-marker: 20px;
+  --timeline-row: 20px;
+}
+
+.size-s {
+  --timeline-node: 12px;
+  --timeline-marker: 24px;
+  --timeline-row: 20px;
+}
+
+.size-l {
+  --timeline-node: 16px;
+  --timeline-marker: 40px;
+  --timeline-row: 28px;
+}
+
+.size-xl {
+  --timeline-node: 18px;
+  --timeline-marker: 48px;
+  --timeline-row: 32px;
+}
+
+.track {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max(var(--timeline-node), var(--timeline-row));
+}
+
+.hasMarker .track {
+  width: var(--timeline-marker);
+}
+
+.anchor {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--timeline-row);
+}
+
+.hasMarker .anchor {
+  height: var(--timeline-marker);
+}
+
+.node {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--timeline-node);
+  height: var(--timeline-node);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--neutral-alpha-strong);
+  background: var(--page-background);
+  color: var(--neutral-on-background-weak);
+  font-variant-numeric: tabular-nums;
+}
+
+.hasMarker .node {
+  width: var(--timeline-marker);
+  height: var(--timeline-marker);
+}
+
+.orbit {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.dot {
+  position: absolute;
+  width: 42%;
+  height: 42%;
+  left: 50%;
+  top: 50%;
+  border-radius: var(--radius-full);
+  background: var(--timeline-dot);
+  transform: translate(-17%, -83%);
+}
+
+.current .orbit {
+  animation: timeline-orbit 2.4s linear infinite;
+}
+
+@keyframes timeline-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .current .orbit {
+    animation: none;
+  }
+}
+.reached {
+  border-color: var(--neutral-border-strong);
+  color: var(--timeline-dot);
+}
+
+.upcoming {
+  border-color: var(--neutral-alpha-medium);
+}
+
+.current {
+  border-color: var(--timeline-dot);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--timeline-dot) 18%, transparent);
+}
+
+.rail {
+  flex: 1 1 auto;
+  min-height: 8px;
+  width: var(--timeline-rail);
+  background: var(--neutral-border-strong);
+}
+
+.railUpcoming {
+  background: repeating-linear-gradient(to bottom, var(--neutral-alpha-strong) 0 3px, transparent 3px 7px);
+}
+
+.row .track {
+  flex-direction: row;
+  width: 100%;
+  height: var(--timeline-row);
+}
+
+.row.hasMarker .track {
+  height: var(--timeline-marker);
+}
+
+.row .rail {
+  min-height: 0;
+  min-width: 8px;
+  width: auto;
+  height: var(--timeline-rail);
+}
+
+.row .railUpcoming {
+  background: repeating-linear-gradient(to right, var(--neutral-alpha-strong) 0 3px, transparent 3px 7px);
+}
+
+.railNone {
+  background: none;
+}
+
+.content {
+  min-width: 0;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  min-height: var(--timeline-row);
+}
+
+.hasMarker .labelRow {
+  min-height: var(--timeline-marker);
+}
+
+.upcomingLabel {
+  color: var(--neutral-on-background-medium);
+}
+
+.tone-brand {
+  --timeline-dot: var(--function-brand-600);
+}
+.tone-brand:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --timeline-dot: var(--function-brand-500);
+}
+
+.tone-accent {
+  --timeline-dot: var(--function-accent-600);
+}
+.tone-accent:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --timeline-dot: var(--function-accent-500);
+}
+
+.tone-neutral {
+  --timeline-dot: var(--function-neutral-600);
+}
+.tone-neutral:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --timeline-dot: var(--function-neutral-500);
+}
+
+.tone-info {
+  --timeline-dot: var(--function-info-600);
+}
+.tone-info:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --timeline-dot: var(--function-info-500);
+}
+
+.tone-success {
+  --timeline-dot: var(--function-success-600);
+}
+.tone-success:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --timeline-dot: var(--function-success-500);
+}
+
+.tone-warning {
+  --timeline-dot: var(--function-warning-600);
+}
+.tone-warning:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --timeline-dot: var(--function-warning-500);
+}
+
+.tone-danger {
+  --timeline-dot: var(--function-danger-600);
+}
+.tone-danger:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --timeline-dot: var(--function-danger-500);
+}
+}

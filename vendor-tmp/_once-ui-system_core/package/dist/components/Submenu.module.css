@@ -1,0 +1,10 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.trigger[data-open] > .row:not(:hover), .trigger[data-highlighted=true] > .row:not(:hover) {
+  background: var(--neutral-alpha-weak);
+  border-color: var(--neutral-alpha-medium);
+}
+.trigger[aria-disabled=true] > .row {
+  opacity: 0.6;
+}
+}

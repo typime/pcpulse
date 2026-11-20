@@ -1,0 +1,8 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.inlineCode {
+  font-size: 80%;
+  line-height: 125%;
+  vertical-align: middle;
+}
+}

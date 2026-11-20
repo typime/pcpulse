@@ -1,0 +1,51 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.toastContainer {
+  left: 50%;
+  transform: translateX(-50%);
+}
+.toastContainer.bottom {
+  bottom: calc(var(--responsive-space-l, 2rem) + var(--safe-area-bottom, 0px));
+}
+.toastContainer.top {
+  top: calc(var(--responsive-space-l, 2rem) + var(--safe-area-top, 0px));
+}
+
+.toastWrapper {
+  transition: transform 0.3s, opacity 0.3s;
+}
+.toastWrapper.bottom {
+  bottom: 0;
+}
+.toastWrapper.top {
+  top: 0;
+}
+
+.toastAnimation.animation-bottom {
+  animation: fadeInBottom 0.3s ease-out forwards;
+}
+.toastAnimation.animation-top {
+  animation: fadeInTop 0.3s ease-out forwards;
+}
+
+@keyframes fadeInBottom {
+  from {
+    opacity: 0;
+    transform: translateY(4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeInTop {
+  from {
+    opacity: 0;
+    transform: translateY(-4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+}

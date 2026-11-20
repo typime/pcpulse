@@ -1,0 +1,22 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.anchor {
+  opacity: 0;
+  transition: opacity var(--transition-duration-micro-medium) var(--transition-eased);
+}
+
+.heading:focus-within .anchor {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .heading:hover .anchor {
+    opacity: 1;
+  }
+}
+@media (hover: none) {
+  .anchor {
+    opacity: 1;
+  }
+}
+}

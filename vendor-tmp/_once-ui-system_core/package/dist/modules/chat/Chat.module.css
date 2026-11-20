@@ -1,0 +1,236 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+/* ChatMessageList: a short conversation sits at the bottom, like any chat.
+ * `justify-content: flex-end` would do that too, but a scroll container can't
+ * scroll to content that overflows on its start side, so the oldest messages
+ * would be cut off once the list fills. An auto margin collapses instead. */
+.list {
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+.list > :first-child {
+  margin-top: auto;
+}
+.list:focus-visible {
+  outline: var(--static-space-2) solid var(--brand-border-strong);
+  outline-offset: -2px;
+}
+
+/* A follow-up in a stack sits 4px under the message above it, not a full gap. */
+.list > [data-stack=middle],
+.list > [data-stack=end] {
+  margin-top: calc(var(--static-space-4) - var(--chat-gap, var(--static-space-16)));
+}
+
+/* ChatMessage */
+.message {
+  position: relative;
+}
+.message:focus-within .actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (hover: hover) {
+  .message:hover .actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.body {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.bubbleBody {
+  flex: 0 1 auto;
+  max-width: min(80%, 40rem);
+}
+
+.bubble {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+/* A stack: the corners on the author's side round less where two bubbles
+ * meet, so a quick run of messages reads as one block. Only a bubble has
+ * corners; a plain row has none to change. */
+.message[data-from=other][data-stack=start] .bubble {
+  border-bottom-left-radius: var(--radius-xs);
+}
+.message[data-from=other][data-stack=middle] .bubble {
+  border-top-left-radius: var(--radius-xs);
+  border-bottom-left-radius: var(--radius-xs);
+}
+.message[data-from=other][data-stack=end] .bubble {
+  border-top-left-radius: var(--radius-xs);
+}
+
+.message[data-from=self][data-stack=start] .bubble {
+  border-bottom-right-radius: var(--radius-xs);
+}
+.message[data-from=self][data-stack=middle] .bubble {
+  border-top-right-radius: var(--radius-xs);
+  border-bottom-right-radius: var(--radius-xs);
+}
+.message[data-from=self][data-stack=end] .bubble {
+  border-top-right-radius: var(--radius-xs);
+}
+
+.actions {
+  align-self: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-micro-medium);
+  /* No hover on touch, so the controls are always there. */
+}
+@media (hover: none) {
+  .actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* TypingIndicator */
+.dot {
+  display: block;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--neutral-on-background-weak);
+  animation: typing 1.2s infinite ease-in-out;
+}
+.dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typing {
+  0%, 60%, 100% {
+    opacity: 0.4;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-0.1875rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    animation-name: typing-fade;
+    animation-duration: 2s;
+  }
+}
+@keyframes typing-fade {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+/* ChatComposer: attach and send centre on the field's last line, so they line
+ * up with a one-line draft and stay at the bottom as it grows. The edge is as
+ * tall as a one-line field (the Textarea's well, inset and line, all set on its
+ * `.base`) and pinned to the bottom. It used to take an 8px bottom padding
+ * inside a slot the Textarea centres, which put the buttons 4px above the text
+ * and in the middle of a multi-line draft. */
+.composer :has(> .composerEdge) {
+  align-self: stretch;
+}
+
+.composerEdge {
+  align-self: flex-end;
+  height: calc(2 * var(--fld-well) + 2 * var(--fld-textarea-inset) + var(--fld-lh));
+}
+
+/* The hint and send button keep their width; the chips beside them wrap. */
+.toolbarEnd {
+  flex-shrink: 0;
+}
+
+.attachment {
+  max-width: 16rem;
+  min-width: 0;
+}
+
+.imagePreview {
+  position: relative;
+  width: 4rem;
+  height: 4rem;
+  flex-shrink: 0;
+}
+
+.imagePreviewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imagePreviewRemove {
+  position: absolute;
+  top: var(--static-space-4);
+  right: var(--static-space-4);
+}
+
+/* ConversationItem */
+.conversation {
+  display: flex;
+  width: 100%;
+  padding: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: var(--cursor-pointer, pointer);
+  -webkit-tap-highlight-color: transparent;
+  transition: var(--transition-micro-medium);
+}
+@media (hover: hover) and (pointer: fine) {
+  .conversation:hover {
+    background: var(--neutral-alpha-weak);
+  }
+}
+.conversation:focus-visible {
+  outline: var(--static-space-2) solid var(--brand-border-strong);
+  outline-offset: -2px;
+}
+.conversation {
+  /* The open conversation carries the brand, as a selected row does
+     everywhere, and its weak text steps up a level: the weak ink on a
+     tinted row read below 4.5:1. */
+}
+.conversation.selected {
+  background: var(--brand-alpha-weak);
+  border-color: var(--brand-alpha-medium);
+}
+.conversation.selected :global(.neutral-on-background-weak) {
+  color: var(--neutral-on-background-medium);
+}
+
+.conversationText {
+  min-width: 0;
+}
+
+.unread {
+  flex-shrink: 0;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 var(--static-space-4);
+}
+
+.unreadDot {
+  min-width: 0.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0;
+}
+}

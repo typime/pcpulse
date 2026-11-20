@@ -1,0 +1,23 @@
+@charset "UTF-8";
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+/* A short grow from the trigger's corner, not a pop: at 0.9 the far edge of a
+   tall panel travelled ~40px, which read as a bounce on a 24rem switcher.
+   0.96 keeps the sense of where the panel came from at a third of the travel. */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.fadeIn {
+  /* transform-origin is set inline from the RESOLVED placement — see
+     DropdownWrapper.tsx. Hardcoding it to `top right` here made every
+     left-anchored panel slide sideways as it scaled open. */
+  animation: fadeIn var(--transition-duration-micro-medium) var(--transition-eased);
+}
+}

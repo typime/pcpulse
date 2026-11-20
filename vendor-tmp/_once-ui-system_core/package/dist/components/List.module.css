@@ -1,0 +1,6 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.listItem::marker {
+  color: var(--neutral-on-background-weak);
+}
+}

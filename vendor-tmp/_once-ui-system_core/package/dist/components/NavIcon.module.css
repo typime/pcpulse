@@ -1,0 +1,59 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+/* Touch helpers for component modules. Emits no CSS of its own. */
+/*
+ * Grows the area that takes a tap to `--touch-target` (44px) on a coarse
+ * pointer, without changing the size the control is drawn at or the layout
+ * around it. An invisible pseudo-element, centred on the control and at least
+ * as big as it, catches the tap; a tap on it is a tap on the control.
+ *
+ * The control must be positioned (every Flex is) and must not clip its own
+ * overflow, and the pseudo-element must be free. A control drawn larger than
+ * the target keeps its own size, so the rule is harmless on big buttons.
+ *
+ * Two areas that overlap give the overlap to the later control, so this is
+ * for controls that stand apart, not for dense grids of dots.
+ */
+@media (pointer: coarse) {
+  .navIcon::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--touch-target, 2.75rem));
+    height: max(100%, var(--touch-target, 2.75rem));
+    transform: translate(-50%, -50%);
+  }
+}
+.navIcon {
+  color: var(--neutral-on-background-strong);
+}
+
+.glyph {
+  overflow: visible;
+  stroke-linecap: var(--icon-linecap, round);
+  stroke-linejoin: var(--icon-linejoin, round);
+}
+.glyph path {
+  transform-box: view-box;
+  transform-origin: 12px 12px;
+  transition: transform 0.32s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.2s ease;
+}
+
+.active .top {
+  transform: translateY(5.25px) rotate(45deg);
+}
+.active .middle {
+  opacity: 0;
+  transform: scaleX(0.2);
+}
+.active .bottom {
+  transform: translateY(-5.25px) rotate(-45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glyph path {
+    transition: none;
+  }
+}
+}

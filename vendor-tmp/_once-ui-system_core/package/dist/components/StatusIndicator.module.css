@@ -1,0 +1,101 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.statusIndicator.xs {
+  width: var(--static-space-2);
+  height: var(--static-space-2);
+}
+.statusIndicator.s {
+  width: var(--static-space-4);
+  height: var(--static-space-4);
+}
+.statusIndicator.m {
+  width: var(--static-space-8);
+  height: var(--static-space-8);
+}
+.statusIndicator.l {
+  width: var(--static-space-16);
+  height: var(--static-space-16);
+}
+.statusIndicator.xl {
+  width: var(--static-space-24);
+  height: var(--static-space-24);
+}
+.statusIndicator.gray {
+  background-color: var(--scheme-gray-700);
+}
+.statusIndicator.blue {
+  background-color: var(--scheme-blue-700);
+}
+.statusIndicator.indigo {
+  background-color: var(--scheme-indigo-700);
+}
+.statusIndicator.violet {
+  background-color: var(--scheme-violet-700);
+}
+.statusIndicator.magenta {
+  background-color: var(--scheme-magenta-700);
+}
+.statusIndicator.pink {
+  background-color: var(--scheme-pink-700);
+}
+.statusIndicator.red {
+  background-color: var(--scheme-red-700);
+}
+.statusIndicator.orange {
+  background-color: var(--scheme-orange-700);
+}
+.statusIndicator.yellow {
+  background-color: var(--scheme-yellow-700);
+}
+.statusIndicator.moss {
+  background-color: var(--scheme-moss-700);
+}
+.statusIndicator.green {
+  background-color: var(--scheme-green-700);
+}
+.statusIndicator.emerald {
+  background-color: var(--scheme-emerald-700);
+}
+.statusIndicator.aqua {
+  background-color: var(--scheme-aqua-700);
+}
+.statusIndicator.cyan {
+  background-color: var(--scheme-cyan-700);
+}
+.statusIndicator.rose {
+  background-color: var(--scheme-rose-700);
+}
+.statusIndicator.mint {
+  background-color: var(--scheme-mint-700);
+}
+.statusIndicator.dusk {
+  background-color: var(--scheme-dusk-700);
+}
+.statusIndicator.sand {
+  background-color: var(--scheme-sand-700);
+}
+.statusIndicator.slate {
+  background-color: var(--scheme-slate-700);
+}
+.statusIndicator.neutral {
+  background-color: var(--function-neutral-700);
+}
+.statusIndicator.brand {
+  background-color: var(--function-brand-700);
+}
+.statusIndicator.accent {
+  background-color: var(--function-accent-700);
+}
+.statusIndicator.info {
+  background-color: var(--function-info-700);
+}
+.statusIndicator.danger {
+  background-color: var(--function-danger-700);
+}
+.statusIndicator.warning {
+  background-color: var(--function-warning-700);
+}
+.statusIndicator.success {
+  background-color: var(--function-success-700);
+}
+}

@@ -1,0 +1,112 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+/* Touch helpers for component modules. Emits no CSS of its own. */
+/*
+ * Grows the area that takes a tap to `--touch-target` (44px) on a coarse
+ * pointer, without changing the size the control is drawn at or the layout
+ * around it. An invisible pseudo-element, centred on the control and at least
+ * as big as it, catches the tap; a tap on it is a tap on the control.
+ *
+ * The control must be positioned (every Flex is) and must not clip its own
+ * overflow, and the pseudo-element must be free. A control drawn larger than
+ * the target keeps its own size, so the rule is harmless on big buttons.
+ *
+ * Two areas that overlap give the overlap to the later control, so this is
+ * for controls that stand apart, not for dense grids of dots.
+ */
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--neutral-solid-strong);
+  outline: none;
+}
+.container:focus-visible {
+  outline: var(--static-space-2) solid var(--brand-solid-strong);
+  outline-offset: calc(-1 * var(--static-space-2));
+}
+.container:fullscreen .video, .container:-webkit-full-screen .video {
+  object-fit: contain;
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+  transition: opacity var(--transition-micro-medium);
+}
+.overlay.visible {
+  opacity: 1;
+}
+.overlay.hidden {
+  opacity: 0;
+}
+
+.gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.25) 35%, transparent 65%);
+  pointer-events: none;
+}
+
+.centerPlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.centerPlayButton {
+  backdrop-filter: blur(0.5rem);
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.controls {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.progressTrack {
+  height: 0.1875rem;
+  cursor: var(--cursor-pointer, pointer);
+  transition: height var(--transition-micro-short);
+}
+@media (hover: hover) {
+  .progressTrack:hover {
+    height: 0.3125rem;
+  }
+}
+@media (pointer: coarse) {
+  .progressTrack::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--touch-target, 2.75rem));
+    height: max(100%, var(--touch-target, 2.75rem));
+    transform: translate(-50%, -50%);
+  }
+}
+
+.progressFill {
+  transition: width 0.05s linear;
+}
+
+.time {
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+}

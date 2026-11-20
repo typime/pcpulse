@@ -1,0 +1,46 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.quiet.quiet[aria-current=page]:not(:hover):not(:focus-visible), .quiet.quiet[aria-pressed=true]:not(:hover):not(:focus-visible) {
+  background: var(--static-transparent);
+  border-color: var(--static-transparent);
+}
+
+.spacious.spacious {
+  height: var(--static-space-48);
+  min-height: var(--static-space-48);
+}
+
+.collapsed {
+  --nav-collapsed-width: calc(var(--static-space-24) * 2 + var(--static-space-16));
+  box-sizing: content-box;
+  width: var(--nav-collapsed-width);
+  min-width: var(--nav-collapsed-width);
+  overflow-x: hidden;
+}
+.collapsed[data-density=compact] {
+  --nav-collapsed-width: calc(
+      (var(--static-space-8) + var(--static-space-2)) * 2 + var(--static-space-16)
+  );
+}
+
+.expandable {
+  position: relative;
+  z-index: 2;
+  margin-right: 0;
+  transition: width var(--transition-duration-macro-medium) var(--transition-eased), min-width var(--transition-duration-macro-medium) var(--transition-eased), margin-right var(--transition-duration-macro-medium) var(--transition-eased), background-color var(--transition-duration-macro-medium) var(--transition-eased), box-shadow var(--transition-duration-macro-medium) var(--transition-eased);
+}
+@media (prefers-reduced-motion: reduce) {
+  .expandable {
+    transition: none;
+  }
+}
+
+.expanded.expanded {
+  width: var(--nav-expanded-width);
+  min-width: var(--nav-expanded-width);
+  margin-right: calc(var(--nav-collapsed-width) - var(--nav-expanded-width));
+  background-color: var(--surface-background);
+  backdrop-filter: var(--backdrop-filter);
+  box-shadow: var(--shadow-l);
+}
+}

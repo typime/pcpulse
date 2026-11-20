@@ -1,0 +1,211 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+/* Touch helpers for component modules. Emits no CSS of its own. */
+/*
+ * Grows the area that takes a tap to `--touch-target` (44px) on a coarse
+ * pointer, without changing the size the control is drawn at or the layout
+ * around it. An invisible pseudo-element, centred on the control and at least
+ * as big as it, catches the tap; a tap on it is a tap on the control.
+ *
+ * The control must be positioned (every Flex is) and must not clip its own
+ * overflow, and the pseudo-element must be free. A control drawn larger than
+ * the target keeps its own size, so the rule is harmless on big buttons.
+ *
+ * Two areas that overlap give the overlap to the later control, so this is
+ * for controls that stand apart, not for dense grids of dots.
+ */
+.container {
+  cursor: var(--cursor-interactive);
+  isolation: isolate;
+}
+.container:focus .element.checked .element::before {
+  display: none;
+}
+@media (hover: hover) {
+  .container:hover .element.checked .element::before {
+    display: none;
+  }
+}
+
+.element {
+  box-shadow: inset 0 0 0 var(--solid-inset-color-brand);
+  border-color: var(--solid-border-color-neutral);
+  border-style: solid;
+  border-width: 1px;
+  width: var(--static-space-20);
+  height: var(--static-space-20);
+  min-width: var(--static-space-20);
+  min-height: var(--static-space-20);
+  transition: var(--transition-micro-medium);
+  background-color: var(--surface-background);
+  outline: none;
+}
+.element.checked {
+  box-shadow: inset 0 var(--solid-inset-distance) var(--solid-inset-size) var(--solid-inset-color-brand), inset 0 1px 0 var(--solid-glow-rim), 0 0 calc(var(--solid-glow-near) * 0.6 * var(--solid-glow-boost, 1)) color-mix(in srgb, var(--brand-solid-medium) var(--solid-glow-near-mix), transparent), 0 0 calc(var(--solid-glow-far) * 0.6 * var(--solid-glow-boost, 1)) color-mix(in srgb, var(--brand-solid-medium) var(--solid-glow-far-mix), transparent);
+}
+@media (prefers-contrast: more) {
+  .element.checked {
+    box-shadow: inset 0 var(--solid-inset-distance) var(--solid-inset-size) var(--solid-inset-color-brand);
+  }
+}
+.element.checked {
+  background-color: var(--brand-solid-medium);
+  border-color: var(--solid-border-color-brand);
+}
+
+.disabled .element {
+  opacity: 0.6;
+}
+.disabled .element::before {
+  display: none;
+}
+
+@media (hover: hover) {
+  .noHover:hover .element::before {
+    display: none;
+  }
+}
+.element:focus-visible::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--static-space-40);
+  height: var(--static-space-40);
+  background-color: var(--brand-alpha-medium);
+  border-radius: var(--radius-full);
+  z-index: -1;
+  animation: scaleInCenter 0.2s forwards;
+}
+
+@media (hover: hover) {
+  .container:hover .element::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: var(--static-space-40);
+    height: var(--static-space-40);
+    background-color: var(--brand-alpha-medium);
+    border-radius: var(--radius-full);
+    z-index: -1;
+    animation: scaleInCenter 0.2s forwards;
+  }
+}
+@keyframes scaleInCenter {
+  from {
+    transform: translate(-50%, -50%) scale(0);
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+.icon {
+  animation: scaleIn 0.2s forwards;
+  animation-delay: 0.1s;
+  transform: scale(0);
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.hidden {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.indeterminate {
+  background: var(--brand-on-solid-strong);
+  width: var(--static-space-12);
+  height: var(--static-space-2);
+}
+
+/* Sizes: m is the 20px box above; a Form's size reaches it through
+   useFieldSize, as it reaches Input. */
+.s .element {
+  width: var(--static-space-16);
+  height: var(--static-space-16);
+  min-width: var(--static-space-16);
+  min-height: var(--static-space-16);
+}
+
+.l .element {
+  width: var(--static-space-24);
+  height: var(--static-space-24);
+  min-width: var(--static-space-24);
+  min-height: var(--static-space-24);
+}
+
+/* No `size` (here or on a Form): m, or the theme density's s or l
+   (density.scss). A radio's dot is sized here then rather than inline. */
+.dot {
+  width: var(--static-space-12);
+  height: var(--static-space-12);
+}
+
+:global(:where(html[data-density="compact"])) .auto .element {
+  width: var(--static-space-16);
+  height: var(--static-space-16);
+  min-width: var(--static-space-16);
+  min-height: var(--static-space-16);
+}
+:global(:where(html[data-density="compact"])) .auto .dot {
+  width: var(--static-space-8);
+  height: var(--static-space-8);
+}
+:global(:where(html[data-density="spacious"])) .auto .element {
+  width: var(--static-space-24);
+  height: var(--static-space-24);
+  min-width: var(--static-space-24);
+  min-height: var(--static-space-24);
+}
+:global(:where(html[data-density="spacious"])) .auto .dot {
+  width: var(--static-space-16);
+  height: var(--static-space-16);
+}
+
+/* The label, description and error beside a checkbox, radio or switch with
+   no size: InteractiveDetails' text presets per size (CONTROL_TEXT). */
+:global(html[data-density="compact"]) .autoText .detailLabel {
+  font-size: calc(var(--font-size-label-s) * var(--font-size-label-multiplier));
+  line-height: calc(var(--line-height-label-s) * var(--line-height-label-multiplier));
+}
+:global(html[data-density="compact"]) .autoText .detailBody {
+  font-size: calc(var(--font-size-body-xs) * var(--font-size-body-multiplier));
+  line-height: calc(var(--line-height-body-xs) * var(--line-height-body-multiplier));
+}
+:global(html[data-density="spacious"]) .autoText .detailLabel {
+  font-size: calc(var(--font-size-label-l) * var(--font-size-label-multiplier));
+  line-height: calc(var(--line-height-label-l) * var(--line-height-label-multiplier));
+}
+:global(html[data-density="spacious"]) .autoText .detailBody {
+  font-size: calc(var(--font-size-body-m) * var(--font-size-body-multiplier));
+  line-height: calc(var(--line-height-body-m) * var(--line-height-body-multiplier));
+}
+
+/* `error` / `errorMessage`: the danger border Input draws. */
+.error .element:not(.checked) {
+  border-color: var(--danger-border-medium);
+  background-color: var(--danger-background-medium);
+}
+
+@media (pointer: coarse) {
+  .element::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--touch-target, 2.75rem));
+    height: max(100%, var(--touch-target, 2.75rem));
+    transform: translate(-50%, -50%);
+  }
+}
+}

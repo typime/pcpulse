@@ -1,0 +1,369 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+/* Touch helpers for component modules. Emits no CSS of its own. */
+/*
+ * Grows the area that takes a tap to `--touch-target` (44px) on a coarse
+ * pointer, without changing the size the control is drawn at or the layout
+ * around it. An invisible pseudo-element, centred on the control and at least
+ * as big as it, catches the tap; a tap on it is a tap on the control.
+ *
+ * The control must be positioned (every Flex is) and must not clip its own
+ * overflow, and the pseudo-element must be free. A control drawn larger than
+ * the target keeps its own size, so the rule is harmless on big buttons.
+ *
+ * Two areas that overlap give the overlap to the later control, so this is
+ * for controls that stand apart, not for dense grids of dots.
+ */
+.tag {
+  white-space: nowrap;
+  user-select: none;
+}
+.tag.gradient {
+  background-image: linear-gradient(45deg, var(--brand-background-strong), var(--accent-background-strong));
+  color: var(--brand-on-background-medium);
+  background-clip: padding-box;
+}
+.tag.hairline {
+  background: transparent;
+}
+.tag.hairline:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  background: var(--static-white);
+}
+.tag.solid {
+  background: var(--tag-tone-solid);
+  color: var(--tag-tone-on-solid);
+}
+.tag.clickable {
+  transition: border-color var(--transition-micro-medium);
+}
+@media (hover: hover) {
+  .tag.clickable:hover {
+    border-color: var(--neutral-alpha-strong);
+  }
+}
+.tag.announce {
+  white-space: normal;
+}
+
+@property --tag-beam-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.beam {
+  position: relative;
+  isolation: isolate;
+}
+.beam::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--tag-beam-angle), transparent 0deg 250deg, var(--function-brand-600) 300deg, var(--function-accent-600) 340deg, transparent 360deg);
+  z-index: -1;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: tagBeam 6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .beam::before {
+    animation: none;
+    --tag-beam-angle: 45deg;
+  }
+}
+
+@keyframes tagBeam {
+  to {
+    --tag-beam-angle: 360deg;
+  }
+}
+.announce {
+  position: relative;
+  isolation: isolate;
+  transition: background-color var(--transition-micro-medium), border-color var(--transition-micro-medium);
+}
+.announce:is(:is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *)))::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  border-radius: inherit;
+  background: linear-gradient(180deg, var(--neutral-alpha-weak), transparent 60%);
+  pointer-events: none;
+}
+@media (hover: hover) {
+  .announce:hover {
+    border-color: var(--neutral-alpha-strong);
+  }
+}
+
+.hairline.size-xs,
+.solid.size-xs {
+  height: var(--static-space-16);
+}
+.hairline.size-s,
+.solid.size-s {
+  height: var(--static-space-20);
+}
+.hairline.size-m,
+.solid.size-m {
+  height: var(--static-space-24);
+}
+.hairline.size-l,
+.solid.size-l {
+  height: calc(var(--static-space-24) + var(--static-space-4));
+}
+.hairline.size-xl,
+.solid.size-xl {
+  height: var(--static-space-32);
+}
+
+.toggle.size-xs {
+  height: var(--static-space-20);
+}
+.toggle.size-s {
+  height: var(--static-space-24);
+}
+.toggle.size-m {
+  height: calc(var(--static-space-24) + var(--static-space-4));
+}
+.toggle.size-l {
+  height: var(--static-space-32);
+}
+.toggle.size-xl {
+  height: var(--static-space-40);
+}
+
+.label {
+  text-box: trim-both cap alphabetic;
+}
+
+.dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--tag-dot);
+}
+
+.toneIcon {
+  color: var(--tag-dot);
+}
+
+.tone-brand {
+  --tag-dot: var(--function-brand-600);
+  --tag-tone-solid: var(--brand-solid-strong);
+  --tag-tone-on-solid: var(--brand-on-solid-strong);
+}
+.tone-brand:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --tag-dot: var(--function-brand-500);
+}
+
+.tone-accent {
+  --tag-dot: var(--function-accent-600);
+  --tag-tone-solid: var(--accent-solid-strong);
+  --tag-tone-on-solid: var(--accent-on-solid-strong);
+}
+.tone-accent:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --tag-dot: var(--function-accent-500);
+}
+
+.tone-neutral {
+  --tag-dot: var(--function-neutral-600);
+  --tag-tone-solid: var(--neutral-solid-strong);
+  --tag-tone-on-solid: var(--neutral-on-solid-strong);
+}
+.tone-neutral:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --tag-dot: var(--function-neutral-500);
+}
+
+.tone-info {
+  --tag-dot: var(--function-info-600);
+  --tag-tone-solid: var(--info-solid-strong);
+  --tag-tone-on-solid: var(--info-on-solid-strong);
+}
+.tone-info:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --tag-dot: var(--function-info-500);
+}
+
+.tone-success {
+  --tag-dot: var(--function-success-600);
+  --tag-tone-solid: var(--success-solid-strong);
+  --tag-tone-on-solid: var(--success-on-solid-strong);
+}
+.tone-success:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --tag-dot: var(--function-success-500);
+}
+
+.tone-warning {
+  --tag-dot: var(--function-warning-600);
+  --tag-tone-solid: var(--warning-solid-strong);
+  --tag-tone-on-solid: var(--warning-on-solid-strong);
+}
+.tone-warning:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --tag-dot: var(--function-warning-500);
+}
+
+.tone-danger {
+  --tag-dot: var(--function-danger-600);
+  --tag-tone-solid: var(--danger-solid-strong);
+  --tag-tone-on-solid: var(--danger-on-solid-strong);
+}
+.tone-danger:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  --tag-dot: var(--function-danger-500);
+}
+
+.toggle {
+  border: 1px solid var(--neutral-alpha-medium);
+  transition: background-color var(--transition-micro-medium), border-color var(--transition-micro-medium), color var(--transition-micro-medium);
+}
+.toggle.unselected {
+  background: transparent;
+  color: var(--neutral-on-background-medium);
+}
+.toggle.unselected:is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  background: var(--static-white);
+}
+.toggle.unselected:focus {
+  color: var(--neutral-on-background-strong);
+  border-color: var(--neutral-alpha-strong);
+}
+@media (hover: hover) {
+  .toggle.unselected:hover {
+    color: var(--neutral-on-background-strong);
+    border-color: var(--neutral-alpha-strong);
+  }
+}
+.toggle.unselected:active {
+  background: var(--neutral-alpha-weak);
+}
+.toggle.selected {
+  --tag-solid: var(--neutral-on-background-strong);
+  --tag-on-solid: var(--page-background);
+  border-color: transparent;
+  background: var(--tag-solid);
+  color: var(--tag-on-solid);
+}
+@media (hover: hover) {
+  .toggle.selected:hover {
+    opacity: 0.9;
+  }
+}
+.toggle.selected:active {
+  opacity: 0.8;
+}
+.toggle.selected[class*=tone-] {
+  --tag-solid: var(--tag-tone-solid);
+  --tag-on-solid: var(--tag-tone-on-solid);
+  box-shadow: inset 0 var(--solid-inset-distance) var(--solid-inset-size) var(--static-transparent), inset 0 1px 0 var(--solid-glow-rim), 0 0 calc(var(--solid-glow-near) * 0.7 * var(--solid-glow-boost, 1)) color-mix(in srgb, var(--tag-solid) var(--solid-glow-near-mix), transparent), 0 0 calc(var(--solid-glow-far) * 0.7 * var(--solid-glow-boost, 1)) color-mix(in srgb, var(--tag-solid) var(--solid-glow-far-mix), transparent);
+}
+@media (prefers-contrast: more) {
+  .toggle.selected[class*=tone-] {
+    box-shadow: inset 0 var(--solid-inset-distance) var(--solid-inset-size) var(--static-transparent);
+  }
+}
+.toggle:disabled {
+  background: var(--neutral-solid-weak);
+  cursor: var(--cursor-disabled, not-allowed);
+}
+@media (pointer: coarse) {
+  .toggle[role=button]::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--touch-target, 2.75rem));
+    height: max(100%, var(--touch-target, 2.75rem));
+    transform: translate(-50%, -50%);
+  }
+}
+
+.remove {
+  margin-block: calc(-1 * var(--static-space-4));
+  margin-right: calc(-1 * var(--static-space-4));
+  opacity: 0.64;
+}
+@media (hover: hover) {
+  .remove:hover {
+    opacity: 1;
+  }
+}
+.remove :global(svg) {
+  width: var(--static-space-12);
+  height: var(--static-space-12);
+}
+
+@media (pointer: coarse) {
+  .action::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--touch-target, 2.75rem));
+    height: max(100%, var(--touch-target, 2.75rem));
+    transform: translate(-50%, -50%);
+  }
+}
+
+.toggle.unselected:has(> .action:focus) {
+  color: var(--neutral-on-background-strong);
+  border-color: var(--neutral-alpha-strong);
+}
+
+.toggle:has(> .action:focus-visible) {
+  outline: 1px auto;
+  outline: -webkit-focus-ring-color auto 1px;
+}
+.toggle:has(> .action:focus-visible) > .action {
+  outline: none;
+}
+
+:global(html[data-density="compact"]) .auto {
+  padding: var(--static-space-1) var(--static-space-8);
+}
+:global(html[data-density="compact"]) .auto.hairline {
+  height: var(--static-space-20);
+  padding-block: 0;
+}
+:global(html[data-density="compact"]) .auto.announce {
+  padding: var(--static-space-2) var(--static-space-8);
+}
+:global(html[data-density="compact"]) .auto.announce .icon {
+  font-size: var(--static-space-16);
+}
+:global(html[data-density="compact"]) .auto.toggle {
+  height: var(--static-space-24);
+  padding: var(--static-space-0) var(--static-space-4);
+}
+:global(html[data-density="compact"]) .auto.toggle .text {
+  font-size: calc(var(--font-size-body-s) * var(--font-size-body-multiplier));
+  line-height: calc(var(--line-height-body-s) * var(--line-height-body-multiplier));
+}
+:global(html[data-density="compact"]) .auto.toggle .icon {
+  font-size: var(--static-space-16);
+}
+:global(html[data-density="spacious"]) .auto {
+  padding: var(--static-space-4) var(--static-space-12);
+}
+:global(html[data-density="spacious"]) .auto.hairline {
+  height: calc(var(--static-space-24) + var(--static-space-4));
+  padding-block: 0;
+}
+:global(html[data-density="spacious"]) .auto.announce {
+  padding: var(--static-space-8) var(--static-space-16);
+  font-size: calc(var(--font-size-label-m) * var(--font-size-label-multiplier));
+  line-height: calc(var(--line-height-label-m) * var(--line-height-label-multiplier));
+}
+:global(html[data-density="spacious"]) .auto.toggle {
+  height: var(--static-space-32);
+  padding: var(--static-space-0) var(--static-space-8);
+}
+:global(html[data-density="spacious"]) .auto.toggle .text {
+  font-size: calc(var(--font-size-body-m) * var(--font-size-body-multiplier));
+  line-height: calc(var(--line-height-body-m) * var(--line-height-body-multiplier));
+}
+}

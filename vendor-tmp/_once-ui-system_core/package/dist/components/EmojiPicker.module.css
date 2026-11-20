@@ -1,0 +1,19 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.emojiButton {
+  will-change: transform;
+  contain: layout style paint;
+  transition: transform 0.1s ease;
+}
+.emojiButton:focus-visible {
+  transform: scale(1.05);
+}
+@media (hover: hover) {
+  .emojiButton:hover {
+    transform: scale(1.05);
+  }
+}
+.emojiButton:focus-visible {
+  background: var(--neutral-alpha-weak) !important;
+}
+}

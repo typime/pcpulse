@@ -1,0 +1,97 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.panel {
+  --header-menu-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  animation: header-menu-open 0.38s var(--header-menu-ease) both;
+}
+.panel[data-state=closed] {
+  animation: header-menu-close 0.22s cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
+}
+
+.body > * {
+  animation: header-menu-row 0.32s var(--header-menu-ease) both;
+  animation-delay: calc(0.06s + var(--header-menu-index, 8) * 0.03s);
+}
+
+.body > :nth-child(1) {
+  --header-menu-index: 0;
+}
+
+.body > :nth-child(2) {
+  --header-menu-index: 1;
+}
+
+.body > :nth-child(3) {
+  --header-menu-index: 2;
+}
+
+.body > :nth-child(4) {
+  --header-menu-index: 3;
+}
+
+.body > :nth-child(5) {
+  --header-menu-index: 4;
+}
+
+.body > :nth-child(6) {
+  --header-menu-index: 5;
+}
+
+.body > :nth-child(7) {
+  --header-menu-index: 6;
+}
+
+.body > :nth-child(8) {
+  --header-menu-index: 7;
+}
+
+.footer {
+  border-top: 1px solid var(--neutral-alpha-weak);
+  padding-bottom: max(var(--static-space-16), var(--safe-area-bottom, 0px));
+  animation: header-menu-row 0.36s var(--header-menu-ease) 0.16s both;
+}
+
+.panel[data-state=closed] .body > *,
+.panel[data-state=closed] .footer {
+  animation: header-menu-fade 0.14s linear both;
+}
+
+@keyframes header-menu-open {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes header-menu-close {
+  from {
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 100% 0);
+  }
+}
+@keyframes header-menu-row {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--static-space-8)));
+  }
+}
+@keyframes header-menu-fade {
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .panel[data-state=closed],
+  .body > *,
+  .footer,
+  .panel[data-state=closed] .body > *,
+  .panel[data-state=closed] .footer {
+    animation: none;
+  }
+}
+}

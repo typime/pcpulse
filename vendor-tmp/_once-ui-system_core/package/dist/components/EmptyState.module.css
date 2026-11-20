@@ -1,0 +1,14 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.emptyState {
+  text-align: center;
+}
+
+.text {
+  max-width: 28rem;
+}
+
+.emptyState[data-size=s] .text {
+  max-width: 24rem;
+}
+}

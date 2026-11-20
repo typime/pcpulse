@@ -1,0 +1,25 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.follower {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483000;
+  display: flex;
+  pointer-events: none;
+  will-change: transform;
+  opacity: 0;
+  scale: 0.6;
+  transition: opacity 120ms ease-out, scale 160ms ease-out;
+}
+.follower[data-visible] {
+  opacity: 1;
+  scale: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .follower {
+    transition: none;
+    scale: 1;
+  }
+}
+}

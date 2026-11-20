@@ -1,0 +1,60 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.overlay {
+  animation: fadeIn 0.2s ease-out forwards;
+  backdrop-filter: var(--backdrop-filter);
+  /* The panel is centred in what is left after the device's safe areas. */
+  padding: var(--safe-area-top, 0px) var(--safe-area-right, 0px) var(--safe-area-bottom, 0px) var(--safe-area-left, 0px);
+}
+.overlay.closing {
+  animation: fadeOut 0.2s ease-out forwards;
+}
+
+.content {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+.content.closing {
+  animation: scaleOut 0.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: var(--backdrop-filter);
+  }
+}
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    backdrop-filter: var(--backdrop-filter);
+  }
+  to {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+}
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes scaleOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+}

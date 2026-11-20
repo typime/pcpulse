@@ -1,0 +1,31 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.numberInput input[type=number]::-webkit-inner-spin-button,
+.numberInput input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.numberInput input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.stepper {
+  pointer-events: visibleFill;
+}
+@media (hover: hover) {
+  .stepper:hover {
+    background-color: var(--neutral-alpha-medium);
+  }
+}
+
+@media (pointer: coarse) {
+  .stepper > :global(.button)::after {
+    height: 100%;
+  }
+}
+@media (pointer: coarse) {
+  .steppersRow .stepper > :global(.button)::after {
+    width: 100%;
+  }
+}
+}

@@ -1,0 +1,38 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+@media (hover: hover) {
+  .control:hover .text {
+    text-decoration-line: underline;
+  }
+}
+
+.text {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
+  text-decoration-color: var(--neutral-border-strong);
+}
+
+.anchor {
+  opacity: 0;
+  transform: scale(0.875);
+  transition: opacity 200ms var(--transition-eased), transform 200ms var(--transition-eased);
+}
+
+.control:focus-within .anchor {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (hover: hover) {
+  .control:hover .anchor {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (hover: none) {
+  .anchor {
+    opacity: 1;
+    transform: none;
+  }
+}
+}

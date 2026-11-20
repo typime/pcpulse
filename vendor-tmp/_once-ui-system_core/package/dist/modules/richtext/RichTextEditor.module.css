@@ -1,0 +1,124 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.frame {
+  border: 1px solid var(--neutral-border-medium);
+  border-radius: var(--radius-l);
+  background-color: var(--neutral-alpha-weak);
+  overflow: hidden;
+  transition: border-color var(--transition-micro-medium);
+}
+.frame:focus-within {
+  border-color: var(--neutral-border-strong);
+}
+
+.frame:not(.invalid):is(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) *):not(:where(:is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))), :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) :is([data-theme=dark],[data-theme=invert]:where([data-theme=light] *):not(:where([data-theme=light] [data-theme=dark] *))) :is([data-theme=light],[data-theme=invert]:where([data-theme=dark] *):not(:where([data-theme=dark] [data-theme=light] *))) *))) {
+  background-color: var(--neutral-background-weak);
+  border-color: var(--neutral-border-strong);
+}
+
+.invalid {
+  border-color: var(--danger-border-medium);
+  background-color: var(--danger-alpha-weak);
+}
+.invalid:focus-within {
+  border-color: var(--danger-border-strong);
+}
+
+.disabled {
+  opacity: 0.6;
+}
+
+.toolbar {
+  border-bottom: 1px solid var(--neutral-border-weak);
+}
+
+.icon {
+  width: var(--static-space-16);
+  height: var(--static-space-16);
+  display: block;
+}
+
+.scroll {
+  overflow-y: auto;
+}
+
+.content {
+  outline: none;
+  min-height: inherit;
+  padding: var(--static-space-12) var(--static-space-16);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-m);
+  line-height: var(--line-height-body-m);
+  color: var(--neutral-on-background-strong);
+  overflow-wrap: anywhere;
+}
+.content > * + * {
+  margin-top: var(--static-space-8);
+}
+.content p {
+  margin: 0;
+}
+.content h2,
+.content h3 {
+  margin: var(--static-space-12) 0 0;
+  font-family: var(--font-heading);
+  font-weight: var(--font-weight-strong, 600);
+  line-height: 1.3;
+}
+.content h2 {
+  font-size: var(--font-size-heading-s);
+}
+.content h3 {
+  font-size: var(--font-size-heading-xs);
+}
+.content > :first-child {
+  margin-top: 0;
+}
+.content ul,
+.content ol {
+  margin: 0;
+  padding-left: var(--static-space-24);
+}
+.content li > p {
+  margin: 0;
+}
+.content blockquote {
+  margin: 0;
+  padding-left: var(--static-space-12);
+  border-left: 2px solid var(--neutral-border-medium);
+  color: var(--neutral-on-background-medium);
+}
+.content code {
+  font-family: var(--font-code);
+  font-size: 0.9em;
+  padding: 0 var(--static-space-4);
+  border-radius: var(--radius-xs);
+  background: var(--neutral-alpha-medium);
+}
+.content pre {
+  margin: 0;
+  padding: var(--static-space-12);
+  border-radius: var(--radius-m);
+  background: var(--neutral-alpha-medium);
+  overflow-x: auto;
+}
+.content pre code {
+  padding: 0;
+  background: none;
+}
+.content a {
+  color: var(--brand-on-background-medium);
+  text-decoration: underline;
+}
+.content hr {
+  border: none;
+  border-top: 1px solid var(--neutral-border-medium);
+}
+.content p:global(.is-editor-empty):first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--neutral-on-background-weak);
+}
+}

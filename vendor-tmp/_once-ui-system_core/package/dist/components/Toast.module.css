@@ -1,0 +1,14 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.toast {
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.visible {
+  opacity: 1;
+}
+
+.hidden {
+  opacity: 0;
+}
+}

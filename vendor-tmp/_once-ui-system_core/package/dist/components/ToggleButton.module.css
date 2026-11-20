@@ -1,0 +1,217 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+/* Touch helpers for component modules. Emits no CSS of its own. */
+/*
+ * Grows the area that takes a tap to `--touch-target` (44px) on a coarse
+ * pointer, without changing the size the control is drawn at or the layout
+ * around it. An invisible pseudo-element, centred on the control and at least
+ * as big as it, catches the tap; a tap on it is a tap on the control.
+ *
+ * The control must be positioned (every Flex is) and must not clip its own
+ * overflow, and the pseudo-element must be free. A control drawn larger than
+ * the target keeps its own size, so the rule is harmless on big buttons.
+ *
+ * Two areas that overlap give the overlap to the later control, so this is
+ * for controls that stand apart, not for dense grids of dots.
+ */
+.button {
+  display: flex;
+  align-items: center;
+  gap: var(--static-space-8);
+  border-width: 1px;
+  border-style: solid;
+  background: var(--static-transparent);
+  color: var(--neutral-on-background-strong);
+  transition: var(--transition-micro-medium);
+  user-select: none;
+  white-space: nowrap;
+}
+.button:focus-visible {
+  background: var(--neutral-alpha-weak);
+  border-color: var(--neutral-alpha-weak);
+}
+@media (hover: hover) and (pointer: fine) {
+  .button:hover:not([data-disabled]) {
+    background: var(--neutral-alpha-weak);
+    border-color: var(--neutral-alpha-weak);
+  }
+}
+.button.selected {
+  background-color: var(--neutral-alpha-medium);
+  border-color: var(--neutral-alpha-weak);
+}
+@media (hover: hover) and (pointer: fine) {
+  .button.selected:hover:not([data-disabled]) {
+    background-color: var(--neutral-alpha-strong);
+    border-color: var(--neutral-alpha-weak);
+  }
+}
+.button[data-disabled] {
+  background: var(--neutral-background-medium);
+  color: var(--neutral-on-background-weak);
+  border-color: transparent;
+}
+@media (pointer: coarse) {
+  .button {
+    position: relative;
+  }
+}
+@media (pointer: coarse) {
+  .button::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--touch-target, 2.75rem));
+    height: max(100%, var(--touch-target, 2.75rem));
+    transform: translate(-50%, -50%);
+  }
+}
+
+.xs {
+  height: var(--static-space-20);
+  min-height: var(--static-space-20);
+  padding: var(--static-space-2) var(--static-space-8);
+}
+
+.s {
+  height: var(--static-space-24);
+  min-height: var(--static-space-24);
+  padding: var(--static-space-2) var(--static-space-8);
+}
+
+.m {
+  height: var(--static-space-32);
+  min-height: var(--static-space-32);
+  padding: var(--static-space-4) var(--static-space-8);
+}
+
+.l {
+  height: var(--static-space-40);
+  min-height: var(--static-space-40);
+  padding: var(--static-space-8) var(--static-space-16);
+}
+
+.xl {
+  height: var(--static-space-48);
+  min-height: var(--static-space-48);
+  padding: var(--static-space-12) var(--static-space-20);
+}
+
+/* No `size`: m above, or the theme density's s or l (density.scss), with the
+   label padding, text, icons and corners ToggleButton.tsx picks per size. */
+:global(:where(html[data-density="compact"])) .auto {
+  height: var(--static-space-24);
+  min-height: var(--static-space-24);
+  padding: var(--static-space-2) var(--static-space-8);
+}
+:global(html[data-density="compact"]) .auto .label {
+  padding-left: var(--static-space-4);
+  padding-right: var(--static-space-4);
+}
+:global(:where(html[data-density="spacious"])) .auto {
+  height: var(--static-space-40);
+  min-height: var(--static-space-40);
+  padding: var(--static-space-8) var(--static-space-16);
+}
+:global(html[data-density="spacious"]) .auto .label {
+  padding-left: var(--static-space-8);
+  padding-right: var(--static-space-8);
+  font-size: calc(var(--font-size-label-m) * var(--font-size-label-multiplier));
+  line-height: calc(var(--line-height-label-m) * var(--line-height-label-multiplier));
+}
+:global(html[data-density="spacious"]) .auto .icon {
+  font-size: var(--static-space-20);
+}
+
+:global(:where(html[data-density="compact"])) .autoRadius:global(.radius-m) {
+  border-radius: var(--radius-s);
+}
+:global(:where(html[data-density="spacious"])) .autoRadius:global(.radius-m) {
+  border-radius: var(--radius-l);
+}
+
+.ghost {
+  border-color: var(--static-transparent);
+}
+
+.outline {
+  border-color: var(--neutral-alpha-weak);
+}
+
+.subtle {
+  border-color: var(--static-transparent);
+}
+.subtle.selected {
+  background: var(--neutral-alpha-medium);
+}
+@media (hover: hover) and (pointer: fine) {
+  .subtle:hover:not([data-disabled]) {
+    background: var(--neutral-alpha-weak);
+    border-color: var(--static-transparent);
+  }
+  .subtle.selected:hover:not([data-disabled]) {
+    background: var(--neutral-alpha-strong);
+  }
+}
+
+.tone-brand {
+  --toggle-tone-weak: var(--brand-alpha-weak);
+  --toggle-tone-medium: var(--brand-alpha-medium);
+  --toggle-tone-text: var(--brand-on-background-strong);
+  --toggle-tone-icon: var(--brand-on-background-weak);
+}
+
+.tone-accent {
+  --toggle-tone-weak: var(--accent-alpha-weak);
+  --toggle-tone-medium: var(--accent-alpha-medium);
+  --toggle-tone-text: var(--accent-on-background-strong);
+  --toggle-tone-icon: var(--accent-on-background-weak);
+}
+
+.tone-info {
+  --toggle-tone-weak: var(--info-alpha-weak);
+  --toggle-tone-medium: var(--info-alpha-medium);
+  --toggle-tone-text: var(--info-on-background-strong);
+  --toggle-tone-icon: var(--info-on-background-weak);
+}
+
+.tone-success {
+  --toggle-tone-weak: var(--success-alpha-weak);
+  --toggle-tone-medium: var(--success-alpha-medium);
+  --toggle-tone-text: var(--success-on-background-strong);
+  --toggle-tone-icon: var(--success-on-background-weak);
+}
+
+.tone-warning {
+  --toggle-tone-weak: var(--warning-alpha-weak);
+  --toggle-tone-medium: var(--warning-alpha-medium);
+  --toggle-tone-text: var(--warning-on-background-strong);
+  --toggle-tone-icon: var(--warning-on-background-weak);
+}
+
+.tone-danger {
+  --toggle-tone-weak: var(--danger-alpha-weak);
+  --toggle-tone-medium: var(--danger-alpha-medium);
+  --toggle-tone-text: var(--danger-on-background-strong);
+  --toggle-tone-icon: var(--danger-on-background-weak);
+}
+
+.toned.selected:not([data-disabled]) {
+  background: var(--toggle-tone-weak);
+  border-color: var(--static-transparent);
+  color: var(--toggle-tone-text);
+}
+.toned.selected:not([data-disabled]) svg {
+  color: var(--toggle-tone-icon);
+}
+@media (hover: hover) and (pointer: fine) {
+  .toned.selected:not([data-disabled]):hover {
+    background: var(--toggle-tone-medium);
+    border-color: var(--static-transparent);
+  }
+}
+.toned.selected:not([data-disabled]).outline {
+  border-color: var(--toggle-tone-medium);
+}
+}

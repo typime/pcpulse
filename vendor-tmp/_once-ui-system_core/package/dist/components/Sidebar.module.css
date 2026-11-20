@@ -1,0 +1,94 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.sidebar {
+  --sidebar-rail-width: 52px;
+  position: relative;
+  flex: none;
+  width: var(--sidebar-width);
+  min-width: 0;
+  transition: width var(--transition-duration-macro-medium) var(--transition-eased);
+}
+.sidebar:has(nav[data-density=normal]), .sidebar:has(nav[data-density=spacious]) {
+  --sidebar-rail-width: 80px;
+}
+.sidebar[data-state=rail] {
+  width: var(--sidebar-rail-width);
+}
+.sidebar[data-state=hidden] {
+  width: 0;
+  overflow: hidden;
+}
+.sidebar[data-resizing], .sidebar[data-resizing] .panel {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebar .panel {
+    transition: none;
+  }
+}
+
+.panel {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 2;
+  width: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  border-radius: 0 var(--radius-l) var(--radius-l) 0;
+  transition: width var(--transition-duration-macro-medium) var(--transition-eased), background-color var(--transition-duration-macro-medium) var(--transition-eased), box-shadow var(--transition-duration-macro-medium) var(--transition-eased);
+}
+.panel[data-icons] {
+  width: var(--sidebar-rail-width);
+}
+.panel[data-peek] {
+  background-color: var(--surface-background);
+  backdrop-filter: var(--backdrop-filter);
+  box-shadow: var(--shadow-l);
+}
+
+.edge {
+  flex: none;
+  overflow: hidden;
+}
+
+.content {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -5px;
+  width: 9px;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 3;
+  outline: none;
+}
+.handle::after {
+  content: "";
+  position: absolute;
+  top: var(--static-space-12);
+  bottom: var(--static-space-12);
+  left: 3px;
+  width: 2px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background-color var(--transition-duration-micro-medium) var(--transition-eased);
+}
+.handle:focus-visible::after, [data-resizing] .handle::after {
+  background: var(--brand-solid-medium);
+}
+@media (hover: hover) {
+  .handle:hover::after {
+    background: var(--brand-solid-medium);
+  }
+}
+.handle:focus-visible::after {
+  box-shadow: 0 0 0 2px var(--brand-alpha-medium);
+}
+}

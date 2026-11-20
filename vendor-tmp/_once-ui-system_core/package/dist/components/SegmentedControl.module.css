@@ -1,0 +1,69 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.shrink {
+  min-width: 0;
+}
+.shrink > :has(> .text) {
+  min-width: 0;
+}
+
+.share {
+  flex: 1 1 0;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.twoLine.twoLine {
+  height: auto;
+  padding-block: var(--static-space-8);
+  line-height: 1.3;
+}
+
+.track {
+  isolation: isolate;
+}
+
+.pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
+  box-sizing: border-box;
+  background-color: var(--neutral-alpha-medium);
+  border: 1px solid var(--neutral-alpha-weak);
+  border-radius: var(--radius-m);
+}
+:global(:where(html[data-density="compact"])) .pill {
+  border-radius: var(--radius-s);
+}
+:global(:where(html[data-density="spacious"])) .pill {
+  border-radius: var(--radius-l);
+}
+.pill[data-ready] {
+  transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1), width 0.32s cubic-bezier(0.32, 0.72, 0, 1), height 0.32s cubic-bezier(0.32, 0.72, 0, 1), border-radius 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pill[data-ready] {
+    transition: none;
+  }
+}
+
+.onPill.onPill.onPill.onPill {
+  background-color: transparent;
+  border-color: transparent;
+}
+}

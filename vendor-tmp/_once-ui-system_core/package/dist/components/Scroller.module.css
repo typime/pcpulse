@@ -1,0 +1,45 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.container {
+  isolation: isolate;
+}
+
+.scroller {
+  scrollbar-width: none;
+  isolation: isolate;
+}
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.row {
+  overflow-x: auto;
+}
+
+.column {
+  overflow-y: auto;
+}
+
+.fadeStart,
+.fadeEnd {
+  --scroller-fade-start: #000;
+  --scroller-fade-end: #000;
+  mask-image: linear-gradient(var(--scroller-fade-axis), var(--scroller-fade-start) 0, var(--scroller-fade-start) 2.5rem, #000 4.5rem, #000 calc(100% - 4.5rem), var(--scroller-fade-end) calc(100% - 2.5rem), var(--scroller-fade-end) 100%);
+}
+
+.row {
+  --scroller-fade-axis: to right;
+}
+
+.column {
+  --scroller-fade-axis: to bottom;
+}
+
+.fadeStart {
+  --scroller-fade-start: transparent;
+}
+
+.fadeEnd {
+  --scroller-fade-end: transparent;
+}
+}

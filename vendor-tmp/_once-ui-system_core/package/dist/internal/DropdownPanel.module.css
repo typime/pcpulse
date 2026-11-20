@@ -1,0 +1,6 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.panel:global(.radius-l) {
+  border-radius: min(var(--radius-l), 1.375rem);
+}
+}

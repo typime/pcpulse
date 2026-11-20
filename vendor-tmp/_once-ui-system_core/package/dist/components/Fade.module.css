@@ -1,0 +1,27 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.mask {
+  isolation: isolate;
+}
+.mask::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(var(--gradient-direction), var(--base-color), transparent);
+  backdrop-filter: blur(var(--fade-blur, 0.5rem));
+  mask-image: linear-gradient(var(--gradient-direction), black 20%, transparent 100%);
+  mask-size: 100% 100%;
+}
+
+.flat::before {
+  backdrop-filter: none;
+}
+
+.pattern::before {
+  background-image: linear-gradient(var(--gradient-direction), var(--base-color), transparent), radial-gradient(transparent 1px, var(--base-color) 1px);
+  background-size: 100% 100%, var(--fade-pattern-size) var(--fade-pattern-size);
+}
+}

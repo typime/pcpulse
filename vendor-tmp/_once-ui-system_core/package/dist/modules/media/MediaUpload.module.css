@@ -1,0 +1,29 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.container:focus {
+  background-color: var(--neutral-background-strong);
+}
+@media (hover: hover) {
+  .container:hover {
+    background-color: var(--neutral-background-strong);
+  }
+}
+
+.text {
+  display: none;
+  visibility: hidden;
+  opacity: 0;
+}
+
+@media (hover: hover) {
+  .upload:hover {
+    background: var(--backdrop);
+    backdrop-filter: blur(0.25rem);
+  }
+  .upload:hover .text {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+  }
+}
+}

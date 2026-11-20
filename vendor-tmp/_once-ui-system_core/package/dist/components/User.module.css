@@ -1,0 +1,19 @@
+@layer properties, theme, base, once-ui, components, utilities;
+@layer once-ui {
+.wrapper {
+  border: 1px solid var(--static-transparent);
+  transition: var(--transition-micro-medium);
+}
+@media (hover: hover) {
+  .wrapper:hover {
+    background-color: var(--neutral-alpha-weak);
+    border: 1px solid var(--neutral-alpha-medium);
+  }
+}
+@media (hover: hover) {
+  .wrapper.selected:hover {
+    background-color: var(--neutral-background-strong);
+    border: 1px solid var(--neutral-border-strong);
+  }
+}
+}
