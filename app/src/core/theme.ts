@@ -1,16 +1,18 @@
-// Koʻrinish: Aurora Glass (asosiy) yoki Once UI; Once uchun qorongʻi / yorugʻ / tizim. Faqat shu qurilmada saqlanadi.
-// Aurora foni kompyuter haroratiga qarab rangini oʻzgartiradi.
+// Koʻrinish: Pulse (asosiy), Aurora Glass yoki Once UI; Once uchun qorongʻi / yorugʻ / tizim. Faqat shu qurilmada saqlanadi.
+// Fon yorugʻligi (Pulse va Aurora) kompyuter haroratiga qarab rangini oʻzgartiradi.
 import { S, render } from "./store";
 import { num } from "./format";
 
-export type Ui = "aurora" | "once";
+export type Ui = "pulse" | "aurora" | "once";
 export type Mode = "dark" | "light" | "system";
 const mqLight = matchMedia("(prefers-color-scheme: light)");
 
 export function uiPref(): { ui: Ui; mode: Mode } {
-  let ui: Ui = "aurora", mode: Mode = "dark";
+  let ui: Ui = "pulse", mode: Mode = "dark";
   try {
-    ui = localStorage.getItem("pp_ui") === "once" ? "once" : "aurora";  // eski "glass" qiymati ham Aurora’ga oʻtadi
+    // pp_ui2 — yangi kalit. Eski pp_ui dan faqat Once UI tanlovi oʻtadi; eski Aurora (avvalgi asosiy) yangi Pulse’ga almashadi.
+    const v = localStorage.getItem("pp_ui2") || (localStorage.getItem("pp_ui") === "once" ? "once" : "pulse");
+    ui = v === "once" || v === "aurora" ? v : "pulse";
     const m = localStorage.getItem("pp_mode");
     if (m === "light" || m === "system" || m === "dark") mode = m;
   } catch { /* maxfiy rejim */ }
@@ -22,9 +24,9 @@ export function applyUi(): void {
   d.setAttribute("data-ui", ui);
   d.setAttribute("data-theme", light ? "light" : "dark");
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", ui === "aurora" ? "#060912" : light ? "#f9f9f9" : "#0a0a0a");
+  if (meta) meta.setAttribute("content", ui === "pulse" ? "#07090e" : ui === "aurora" ? "#060912" : light ? "#f9f9f9" : "#0a0a0a");
 }
-export function setUiPref(k: "pp_ui" | "pp_mode", v: string): void {
+export function setUiPref(k: "pp_ui2" | "pp_mode", v: string): void {
   try { localStorage.setItem(k, v); } catch { /* maxfiy rejim */ }
   applyUi();
   render();
@@ -46,8 +48,9 @@ export function heatBand(): Band {
   const temps = [c.temp, g.temp].filter(num);
   const t = temps.length ? Math.max(...temps) : 40 + (c.load || 0) * 0.45;
   // histerezis: qiziganda darhol, soviganda chegaradan 3°C pastga tushgandagina — rang chegarada tebranmasin
-  const up = t >= 82 ? "hot" : t >= 66 ? "warm" : "cool";
-  const down = t >= 79 ? "hot" : t >= 63 ? "warm" : "cool";
+  // chegaralar datchiklar bilan bir xil: 70°C dan iliq, 85°C dan issiq
+  const up = t >= 85 ? "hot" : t >= 70 ? "warm" : "cool";
+  const down = t >= 82 ? "hot" : t >= 67 ? "warm" : "cool";
   const rank = { off: 0, cool: 1, warm: 2, hot: 3 } as const;
   lastBand = lastBand === "off" ? up : rank[up] > rank[lastBand] ? up : rank[down] < rank[lastBand] ? down : lastBand;
   return lastBand;

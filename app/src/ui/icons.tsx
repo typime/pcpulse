@@ -1,6 +1,8 @@
 // Chiziqli ikonlar (24×24, 1.8 qalinlik). Barchasi ilovaning oʻz chizgisi.
 const P = {
   pulse: '<path d="M3 12h4l3-7 4 14 3-7h4"/>',
+  home: '<path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-6H9v6H5.5A1.5 1.5 0 0 1 4 19z"/>',
+  heart: '<path d="M12 19.5s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7a4.2 4.2 0 0 1 7.5 2.5c0 5.4-7.5 10-7.5 10z"/>',
   chip: '<rect x="6" y="6" width="12" height="12" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2.5V6M15 2.5V6M9 18v3.5M15 18v3.5M2.5 9H6M2.5 15H6M18 9h3.5M18 15h3.5"/>',
   gpu: '<rect x="2.5" y="6.5" width="19" height="11" rx="2.5"/><circle cx="9" cy="12" r="2.6"/><path d="M14.5 10h4M14.5 14h4M5 17.5V20M9 17.5V20"/>',
   memory: '<rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 10.5v3M11 10.5v3M15 10.5v3M6 17v2.5M10 17v2.5M14 17v2.5M18 17v2.5"/>',

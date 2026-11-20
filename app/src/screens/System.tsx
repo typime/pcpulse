@@ -104,7 +104,7 @@ function Components() {
                   <div style={{ minWidth: 0 }}><div className="t">{d.name}</div><div className="s">{meta}</div></div>
                   <div className="r">
                     {num(d.life) ? <Tag level={d.life < 10 ? "crit" : d.life < 30 ? "warn" : "ok"}>resurs {r0(d.life)}%</Tag> : null}
-                    {num(d.temp) ? <b className="t-num" style={{ color: heatColor(d.temp + 8) }}>{r0(d.temp)}°C</b> : null}
+                    {num(d.temp) ? <b className="t-num" style={{ color: heatColor(d.temp + 18) }}>{r0(d.temp)}°C</b> : null}
                   </div>
                 </div>
               );

@@ -1,6 +1,7 @@
 /* PC Pulse dizayn tizimi — tokenlar.
    Komponentlar faqat semantik tokenlardan foydalanadi (--surface, --text-2, --accent …).
-   Ikki mavzu: Aurora Glass (asosiy, data-ui="aurora") va Once UI (data-ui="once", vendor/once-ui/tokens.css). */
+   Uch mavzu: Pulse (asosiy, data-ui="pulse"), Aurora Glass (data-ui="aurora") va Once UI (data-ui="once", vendor/once-ui/tokens.css).
+   Datchik ranglari: --gc1/--gc2 (sovuq), --gw1/--gw2 (iliq), --gh1/--gh2 (issiq), --g-off (yonmagan chiziqcha). */
 
 @font-face {
   font-family: "Pulse Sans"; src: url("../fonts/PulseSans-VF.woff") format("woff");
@@ -25,7 +26,61 @@
   --ease-pop: cubic-bezier(.34, 1.5, .64, 1);
 }
 
-/* =============================================================== AURORA GLASS (asosiy) */
+/* =============================================================== PULSE (asosiy) */
+[data-ui="pulse"] {
+  color-scheme: dark;
+  --font: "Pulse Sans", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --font-display: var(--font);
+  --font-mono: "Geist Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  --wd-display: 100%; --wd-heading: 100%; --wd-body: 100%;
+
+  --ink-1: #07090e;
+  --ink-2: #10141c;
+  --bg: var(--ink-1);
+  --text: #f2f4f8;
+  --text-2: #8d95a7;
+  --text-3: #5f687a;
+  --accent: #5b9dff;
+  --accent-2: #a084ff;
+  --on-accent: #07090e;
+  --ok: #34d99a; --warn: #ffb648; --crit: #ff5c6e; --info: #5b9dff;
+  --c-cpu: #4fb2ff; --c-gpu: #a084ff; --c-ram: #ffb648; --c-net: #38d3e6; --c-power: #34d99a; --c-5: #ff7eb6;
+
+  --surface: rgba(13, 17, 25, .86);
+  --surface-2: #121722;
+  --surface-sunken: rgba(255, 255, 255, .03);
+  --surface-hover: rgba(255, 255, 255, .05);
+  --surface-active: rgba(255, 255, 255, .08);
+  --border: rgba(255, 255, 255, .068);
+  --border-strong: rgba(255, 255, 255, .13);
+  --edge: none;
+  --glass-filter: blur(14px) saturate(120%);
+  --glass-filter-strong: blur(22px) saturate(130%);
+  --overlay: rgba(3, 4, 8, .66);
+  --track: rgba(255, 255, 255, .075);
+  --grid-line: rgba(255, 255, 255, .055);
+
+  --r-xs: 6px; --r-s: 9px; --r-m: 12px; --r-l: 14px; --r-xl: 18px; --r-pill: 999px;
+  --sh-1: inset 0 1px 0 rgba(255, 255, 255, .035);
+  --sh-2: 0 24px 60px -20px rgba(0, 0, 0, .85), 0 0 0 1px rgba(255, 255, 255, .04);
+  --glow-accent: 0 0 0 1px rgba(91, 157, 255, .35), 0 8px 26px -10px rgba(91, 157, 255, .5);
+  --focus: 0 0 0 2px var(--ink-1), 0 0 0 4px var(--accent);
+
+  --gc1: #4cc9ff; --gc2: #3b5bff;
+  --gw1: #ff5a1f; --gw2: #ffd23f;
+  --gh1: #ff2d55; --gh2: #ff8a3d;
+  --g-off: rgba(255, 255, 255, .12);
+  --hm-fill: #ff5a1f 0%, #ffb31f 30%, #c4e24a 54%, #2fe0b0 78%, #19d3ea 100%;
+  --hm-ticks: #ff6a1f 0%, #ffc21f 30%, #6fe06a 56%, #20c7d8 78%, #3b82f6 100%;
+
+  /* pastdagi yorugʻlik ranglari — kompyuter haroratiga qarab JS almashtiradi */
+  --aur-a: #2b4dff;
+  --aur-b: #7a3cff;
+  --aur-c: #00b7d6;
+  --aur-d: #1b2a7a;
+}
+
+/* =============================================================== AURORA GLASS */
 [data-ui="aurora"] {
   color-scheme: dark;
   --font: "Pulse Sans", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
@@ -88,6 +143,13 @@
   --glow-accent: 0 0 0 1px rgba(70, 225, 242, .35), 0 8px 26px -8px rgba(70, 225, 242, .45);
   --focus: 0 0 0 2px var(--ink-1), 0 0 0 4px var(--cyan);
 
+  --gc1: #5fe9f6; --gc2: #4f86ff;
+  --gw1: #ff7a3d; --gw2: #ffd15e;
+  --gh1: #ff4060; --gh2: #ff9a3d;
+  --g-off: rgba(160, 176, 255, .16);
+  --hm-fill: #ff6a3d 0%, #ffbf5e 30%, #b8e35a 54%, #4fe3a6 76%, #46e1f2 100%;
+  --hm-ticks: #ff6a3d 0%, #ffbf5e 30%, #4fe3a6 56%, #46e1f2 78%, #4f86ff 100%;
+
   /* aurora fon ranglari — kompyuter haroratiga qarab JS almashtiradi */
   --aur-a: #2b4dff;
   --aur-b: #7a3cff;
@@ -132,9 +194,20 @@
   --sh-2: var(--shadow-xl);
   --glow-accent: none;
   --focus: 0 0 0 2px var(--page-background), 0 0 0 4px var(--brand-border-strong);
+
+  --gc1: var(--scheme-cyan-700); --gc2: var(--scheme-blue-600);
+  --gw1: var(--scheme-orange-600); --gw2: var(--scheme-yellow-700);
+  --gh1: var(--scheme-red-600); --gh2: var(--scheme-orange-600);
+  --g-off: var(--neutral-alpha-medium);
+  --hm-fill: var(--scheme-red-600) 0%, var(--scheme-orange-600) 28%, var(--scheme-yellow-700) 50%, var(--scheme-green-700) 76%, var(--scheme-cyan-700) 100%;
+  --hm-ticks: var(--hm-fill);
 }
 [data-ui="once"][data-theme="light"] {
   color-scheme: light;
+  --gc1: var(--scheme-cyan-500); --gc2: var(--scheme-blue-500);
+  --gw1: var(--scheme-orange-500); --gw2: var(--scheme-yellow-600);
+  --gh1: var(--scheme-red-500); --gh2: var(--scheme-orange-500);
+  --hm-fill: var(--scheme-red-500) 0%, var(--scheme-orange-500) 28%, var(--scheme-yellow-600) 50%, var(--scheme-green-500) 76%, var(--scheme-cyan-500) 100%;
   --ok: var(--scheme-green-500); --warn: var(--scheme-yellow-600); --crit: var(--scheme-red-500); --info: var(--scheme-blue-500);
   --c-cpu: var(--scheme-cyan-500); --c-gpu: var(--scheme-violet-500); --c-ram: var(--scheme-yellow-600);
   --c-net: var(--scheme-blue-500); --c-power: var(--scheme-green-500); --c-5: var(--scheme-pink-500);

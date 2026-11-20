@@ -49,8 +49,12 @@ export function Settings() {
       <div className="set-main">
         <Section id="look" title="Koʻrinish" sub="Faqat shu qurilmada saqlanadi — telefon va kompyuterda har xil tanlash mumkin.">
           <div className="themes" role="radiogroup" aria-label="Mavzu">
-            {([["aurora", "Aurora Glass", "Shisha panellar, fon kompyuter haroratiga qarab oʻzgaradi"], ["once", "Once UI", "Toza va aniq; qorongʻi yoki yorugʻ"]] as [Ui, string, string][]).map(([v, t, sub]) => (
-              <button key={v} type="button" className={cx("theme-opt", ui === v && "on")} role="radio" aria-checked={ui === v} onClick={() => setUiPref("pp_ui", v)}>
+            {([
+              ["pulse", "Pulse", "Toʻq kartalar va chiziqli datchiklar; yorugʻlik haroratga qarab oʻzgaradi"],
+              ["aurora", "Aurora Glass", "Shisha panellar, butun fon haroratga qarab oʻzgaradi"],
+              ["once", "Once UI", "Toza va aniq; qorongʻi yoki yorugʻ"],
+            ] as [Ui, string, string][]).map(([v, t, sub]) => (
+              <button key={v} type="button" className={cx("theme-opt", ui === v && "on")} role="radio" aria-checked={ui === v} onClick={() => setUiPref("pp_ui2", v)}>
                 <span className={cx("theme-prev", `tp-${v}`)} aria-hidden="true"><i /><i /><i /><i /></span>
                 <span className="theme-meta"><b>{t}</b><span className="t-sub">{sub}</span></span>
                 {ui === v ? <span className="theme-check"><Icon name="check" size={14} /></span> : null}

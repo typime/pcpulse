@@ -12,6 +12,7 @@
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
+[data-ui="pulse"] .pnl { background: linear-gradient(180deg, rgba(17, 21, 30, .9), rgba(11, 14, 21, .88)); }
 .pnl.flush { padding: 0; }
 .pnl.tight { padding: var(--sp-4); }
 .pnl.hero { border-radius: var(--r-xl); padding: clamp(20px, 2.6vw, 32px); }
@@ -31,6 +32,7 @@ a.pnl:active, button.pnl.click:active { transform: translateY(0) scale(.995); }
 
 /* ================================================================ Tugmalar */
 [data-ui="aurora"] { --btn-pri: linear-gradient(135deg, #5fe9f6 0%, #5aa2ff 52%, #7c6bff 100%); --btn-pri-ink: #050b1a; --btn-pri-glow: 0 10px 28px -10px rgba(90, 162, 255, .7); }
+[data-ui="pulse"] { --btn-pri: #eef2f8; --btn-pri-ink: #0a0d13; --btn-pri-glow: 0 8px 24px -12px rgba(200, 215, 255, .45); }
 [data-ui="once"] { --btn-pri: var(--brand-solid-medium); --btn-pri-ink: var(--brand-on-solid-strong); --btn-pri-glow: none; }
 
 .btn {
@@ -82,6 +84,7 @@ a.pnl:active, button.pnl.click:active { transform: translateY(0) scale(.995); }
 .sw span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, .35); transition: transform var(--dur-2) var(--ease-pop); }
 .sw input:checked + span { background: var(--btn-pri); box-shadow: none; }
+[data-ui="pulse"] .sw input:checked + span { background: var(--accent); }
 [data-ui="once"] .sw input:checked + span::after { background: var(--on-accent); }
 .sw input:checked + span::after { transform: translateX(18px); }
 .sw input:focus-visible + span { box-shadow: var(--focus); }
@@ -161,6 +164,47 @@ input[type="date"].in, input[type="time"].in { width: auto; }
 .ring .center { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
 .ring .center b { font-family: var(--font-display); font-stretch: var(--wd-display); font-weight: 640; letter-spacing: -.04em; line-height: 1; }
 .ring .center small { display: block; font-size: var(--fs-xs); color: var(--text-2); margin-top: 2px; }
+
+/* ================================================================ Yoy datchik (ArcGauge) */
+.gauge { position: relative; width: 220px; max-width: 100%; }
+.gauge svg { display: block; width: 100%; height: auto; overflow: visible; }
+.g-ticks line { stroke: var(--g-off); stroke-width: 2.7; stroke-linecap: round; transition: stroke .3s var(--ease-out); }
+[data-ui="pulse"] .g-ticks, [data-ui="aurora"] .g-ticks { filter: drop-shadow(0 0 3px color-mix(in srgb, var(--g2) 40%, transparent)); }
+.tone-cool { --g1: var(--gc1); --g2: var(--gc2); }
+.tone-warm { --g1: var(--gw1); --g2: var(--gw2); }
+.tone-hot { --g1: var(--gh1); --g2: var(--gh2); }
+.tone-off { --g1: var(--g-off); --g2: var(--g-off); }
+.g-c { position: absolute; left: 0; right: 0; top: 38%; text-align: center; pointer-events: none; }
+.g-v { font-family: var(--font-display); font-size: 46px; font-weight: 600; letter-spacing: -.045em; line-height: 1; color: var(--text); }
+.g-v sup { font-size: 15px; font-weight: 520; letter-spacing: 0; vertical-align: top; position: relative; top: -2px; margin-left: 3px; color: var(--text-2); }
+.g-l { margin-top: 7px; font-size: var(--fs-s); color: var(--text-2); }
+.g-glow { position: absolute; left: 14%; right: 14%; bottom: -46px; height: 84px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--g1), var(--g2)), transparent); opacity: .32; filter: blur(10px); transition: background .6s; }
+[data-ui="once"] .g-glow { opacity: .14; }
+.tone-off .g-glow { display: none; }
+
+/* ================================================================ Amal qatori (ActionRow) */
+.arows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3) var(--sp-4); }
+.arow { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: var(--sp-4); width: 100%; min-height: 72px;
+  padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-5); color: inherit; font: inherit; text-align: left; cursor: pointer;
+  transition: background var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out); }
+.arow-ico { display: grid; place-items: center; color: var(--tone, var(--text-2)); }
+.arow-ico svg { width: 20px; height: 20px; }
+.arow-t { min-width: 0; }
+.arow-t b { display: block; font-weight: 600; font-size: var(--fs-m); line-height: 1.3; }
+.arow-t small { display: block; margin-top: 2px; color: var(--text-3); font-size: var(--fs-s); line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arow-go { position: relative; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: var(--text-2);
+  background: var(--surface-sunken); border: 1px solid var(--border-strong); transition: transform var(--dur-2) var(--ease-out), color var(--dur-2), background var(--dur-2); }
+@media (hover: hover) {
+  .arow:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+  .arow:hover .arow-go { transform: translateX(2px); color: var(--text); background: var(--surface-active); }
+}
+.arow:active { transform: scale(.99); }
+.arow.danger { --tone: var(--crit); } .arow.warn { --tone: var(--warn); } .arow.violet { --tone: var(--accent-2); }
+.arow[disabled] { opacity: .42; pointer-events: none; }
+.arow.busy .arow-go svg { visibility: hidden; }
+.arow.busy .arow-go::after { content: ""; position: absolute; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--text-2); border-right-color: transparent; animation: pp-spin .7s linear infinite; }
+@media (max-width: 760px) { .arows { grid-template-columns: minmax(0, 1fr); gap: var(--sp-2); } .arow { min-height: 64px; padding-left: var(--sp-4); } }
 
 /* ================================================================ Grafiklar */
 .spark { display: block; width: 100%; height: 40px; overflow: visible; }

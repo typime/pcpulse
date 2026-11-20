@@ -39,6 +39,19 @@ h1, h2, h3, h4, p { margin: 0; }
 .aurora i:nth-child(3) { width: 62vmax; height: 48vmax; bottom: -26vmax; left: 16vmax; background-color: var(--aur-c); opacity: .3; }
 .aurora i:nth-child(4) { width: 52vmax; height: 42vmax; bottom: -20vmax; right: -14vmax; background-color: var(--aur-d); opacity: .55; }
 
+/* Pulse: toʻq fon, yuqorida nuqtali toʻr, pastdan ikki rangli yorugʻlik (ranglari haroratga qarab oʻzgaradi) */
+[data-ui="pulse"] .aurora { display: block; background: radial-gradient(90% 60% at 50% 0%, rgba(26, 34, 58, .45), transparent 70%), #07090e; }
+[data-ui="pulse"] .aurora::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, .085) 1px, transparent 1.3px); background-size: 18px 18px;
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, .9) 0%, rgba(0, 0, 0, .35) 32%, transparent 58%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, .9) 0%, rgba(0, 0, 0, .35) 32%, transparent 58%);
+}
+[data-ui="pulse"] .aurora i:nth-child(1) { width: 78vmax; height: 46vmax; top: auto; bottom: -30vmax; left: -22vmax; opacity: .42; }
+[data-ui="pulse"] .aurora i:nth-child(2) { width: 64vmax; height: 40vmax; top: auto; bottom: -25vmax; right: -16vmax; opacity: .6; }
+[data-ui="pulse"] .aurora i:nth-child(3) { width: 50vmax; height: 26vmax; bottom: -20vmax; left: 30vmax; opacity: .14; }
+[data-ui="pulse"] .aurora i:nth-child(4) { display: none; }
+
 /* ---------------------------------------------------------------- tipografiya */
 .t-display { font-family: var(--font-display); font-stretch: var(--wd-display); font-weight: 640; letter-spacing: -.035em; line-height: var(--lh-tight); }
 .t-h1 { font-family: var(--font-display); font-stretch: var(--wd-heading); font-size: clamp(24px, 2.6vw, 34px); font-weight: 620; letter-spacing: -.03em; line-height: 1.12; }

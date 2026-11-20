@@ -125,10 +125,10 @@ export function Meter({ pct, color, thick, label }: { pct: unknown; color?: stri
 }
 
 // ---------------------------------------------------------------- AnimatedNumber
-export function AnimatedNumber({ value, format = (v) => String(Math.round(v)), duration = 600 }: { value: unknown; format?: (v: number) => string; duration?: number }) {
+export function AnimatedNumber({ value, format = (v) => String(Math.round(v)), duration = 600, fromZero }: { value: unknown; format?: (v: number) => string; duration?: number; fromZero?: boolean }) {
   const target = num(value) ? value : null;
-  const [shown, setShown] = useState<number | null>(target);
-  const from = useRef<number | null>(target);
+  const [shown, setShown] = useState<number | null>(fromZero && target !== null ? 0 : target);  // fromZero: birinchi chizishda 0 dan sanaydi
+  const from = useRef<number | null>(fromZero && target !== null ? 0 : target);
   useEffect(() => {
     if (target === null) { setShown(null); from.current = null; return; }
     const start = from.current;

@@ -176,6 +176,32 @@ export function QuickActions() {
   );
 }
 
+// ---------------------------------------------------------------- amal qatori (Umumiy sahifa, pastki roʻyxat)
+export function ActionRow({ icon, title, sub, onClick, tone, busy, disabled }: {
+  icon: IconName; title: string; sub: string; onClick: () => void; tone?: "danger" | "warn" | "violet"; busy?: boolean; disabled?: boolean;
+}) {
+  return (
+    <button type="button" className={cx("pnl arow", tone, busy && "busy")} onClick={onClick} disabled={disabled} aria-busy={busy || undefined}>
+      <span className="arow-ico"><Icon name={icon} /></span>
+      <span className="arow-t"><b>{title}</b><small>{sub}</small></span>
+      <span className="arow-go" aria-hidden="true"><Icon name="chevR" size={16} /></span>
+    </button>
+  );
+}
+export function QuickRows() {
+  const caps = (S.live && S.live.caps) || {};
+  const gs = ((S.live && S.live.guard) || {}).state || "off";
+  return (
+    <div className="arows">
+      <ActionRow icon="lock" title="Qulflash" sub="Ekranni hozir qulflaydi" onClick={A.lock} busy={S.busy.lock} disabled={!caps.lock} />
+      {gs === "off" ? <ActionRow icon="shield" title="Qoʻriqlash" sub="Kimdir tegsa — ekran qulflanadi" onClick={A.guardArm} busy={S.busy.guardArm} disabled={!caps.guard} tone="violet" />
+        : <ActionRow icon="shield" title="Qoʻriqlash yoniq" sub="Oʻchirish uchun bosing" onClick={A.guardOff} busy={S.busy.guardOff} tone="warn" />}
+      <ActionRow icon="moon" title="Uyqu" sub="Kompyuterni uyqu rejimiga oʻtkazadi" onClick={A.sleepPc} busy={S.busy.sleep} disabled={!caps.power} />
+      <ActionRow icon="power" title="Oʻchirish" sub="Tasdiqlagach 5 soniyada oʻchadi" onClick={A.shutdown} busy={S.busy.shutdown} disabled={!caps.power} tone="danger" />
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------- MetricCard
 export function MetricCard({ href, icon, label, meta, value, unit, sub, color, spark, foot }: {
   href: string; icon: IconName; label: string; meta?: string; value: unknown; unit?: string; sub?: ReactNode; color: string;

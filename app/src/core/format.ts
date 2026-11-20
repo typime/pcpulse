@@ -59,8 +59,8 @@ export function fmtUptime(sec: number | undefined): string {
   const s = sec || 0; const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
   return d ? `${d} kun ${h} soat` : h ? `${h} soat ${m} daq` : `${m} daq`;
 }
-/** Harorat → holat: cool / warm / hot / na */
-export const heat = (t: unknown) => (!num(t) ? "na" : t < 60 ? "cool" : t < 80 ? "warm" : "hot");
+/** Harorat → holat: cool / warm / hot / na (70°C va 85°C — datchiklar va fon yorugʻligi bilan bir xil chegaralar) */
+export const heat = (t: unknown) => (!num(t) ? "na" : t < 70 ? "cool" : t < 85 ? "warm" : "hot");
 /** Foiz → holat sinfi */
 export const pctCls = (p: unknown, w = 75, c = 90) => (!num(p) ? "" : p >= c ? "crit" : p >= w ? "warn" : "");
 export const initials = (s: unknown) => (String(s || "?").replace(/[^\p{L}\p{N}]/gu, "")[0] || "?").toUpperCase();

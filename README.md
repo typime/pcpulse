@@ -33,7 +33,7 @@ Kompyuterni kuzatadigan va masofadan boshqaradigan ilova. Siz harorat, yuklama, 
 
 **Kompyuterda oʻz oynasi:** `PCPulseAgent.exe` ni yoki Start menyusi / ish stolidagi “PC Pulse” yorligʻini ochsangiz, PC Pulse brauzersiz, alohida dastur oynasida ochiladi (Windows’ning WebView2 dvigateli). Administrator ruxsati faqat oʻrnatish va yangilashda soʻraladi. Agent boshqaruv menyusi (qayta ulash, qayta ishga tushirish, olib tashlash): `PCPulseAgent.exe --manage`.
 
-**Koʻrinish:** asosiy mavzu — Aurora Glass (fon kompyuter haroratiga qarab rangini oʻzgartiradi), ikkinchisi — Once UI (qorongʻi / yorugʻ / tizim). Sozlamalar → Koʻrinish. Eski interfeys vaqtincha `…/pcpulse/classic/` manzilida turibdi.
+**Koʻrinish:** asosiy mavzu — Pulse (toʻq kartalar, yoy shaklidagi chiziqli datchiklar, vertikal salomatlik shkalasi; datchiklar va pastdagi yorugʻlik 70°C dan sariq, 85°C dan qizil boʻladi). Qolgan ikkitasi — Aurora Glass (shisha panellar, butun fon haroratga qarab oʻzgaradi) va Once UI (qorongʻi / yorugʻ / tizim). Sozlamalar → Koʻrinish. Eski interfeys vaqtincha `…/pcpulse/classic/` manzilida turibdi.
 
 ---
 
@@ -84,7 +84,8 @@ app/                  Interfeys (PWA + kompyuter oynasi) — React 19 + TypeScri
   src/core/           maʼlumot qatlami: Supabase RPC, jonli kuzatuv, buyruqlar, push, mavzu
   src/ui/             dizayn tizimi komponentlari (Panel, MetricCard, Ring, grafiklar, modal…)
   src/screens/        ekranlar: Umumiy, Tizim, Jarayonlar, Ekran vaqti, Boshqaruv, Sozlamalar
-  src/styles/         tokenlar (Aurora Glass, Once UI), asos, komponentlar, ekranlar
+  src/ui/gauges.tsx   yoy datchik (ArcGauge), datchik kartasi, salomatlik shkalasi
+  src/styles/         tokenlar (Pulse, Aurora Glass, Once UI), asos, komponentlar, ekranlar
   public/             service worker, manifest, ikonlar, shriftlar (Pulse Sans, Geist), Once UI tokenlari
 web/                  eski interfeys (vanilla JS) — /classic/ manzilida
 agent/                Windows agent (Python → PyInstaller orqali PCPulseAgent.exe)

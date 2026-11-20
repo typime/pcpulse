@@ -14,7 +14,7 @@ import { Control } from "./screens/Control";
 import { Settings } from "./screens/Settings";
 
 export const NAV: [Route, string, IconName, string][] = [
-  ["overview", "Umumiy", "pulse", "Umumiy"],
+  ["overview", "Umumiy", "home", "Umumiy"],
   ["system", "Tizim", "chip", "Tizim"],
   ["procs", "Jarayonlar", "layers", "Jarayon"],
   ["time", "Ekran vaqti", "clock", "Vaqt"],
@@ -131,7 +131,7 @@ function Sidebar() {
       </a>
       <nav className="side-nav">
         {NAV.map(([k, t, i]) => (
-          <a key={k} className={cx("nav-i", S.route === k && "on")} href={`#/${k}`} aria-current={S.route === k ? "page" : undefined}>
+          <a key={k} className={cx("nav-i", S.route === k && "on", k === "settings" && "nav-sep")} href={`#/${k}`} aria-current={S.route === k ? "page" : undefined}>
             <Icon name={i} size={19} /><span>{t}</span>
           </a>
         ))}
@@ -169,22 +169,33 @@ function DeviceCard() {
 function TopBar() {
   const d = device();
   const L = S.live;
+  const ov = S.route === "overview";
+  const name = String(S.user.username || "");
+  const state = S.online ? (L && L.locked ? "qulflangan" : "onlayn") : "oflayn";
+  let sub = "";
+  if (ov) {
+    const lead = String((S.health && S.health.summary) || "").split(". ")[0].replace(/\.$/, "");
+    sub = !S.devices.length ? "Kompyuterni ulash uchun unda PC Pulse agentini ishga tushiring." : S.online ? (lead ? `${lead}.` : "Kompyuteringiz bugun qanday ishlayapti?") : "Kompyuter hozir aloqada emas.";
+  }
   return (
     <header className="top">
-      <div className="top-title">
-        <h1 className="t-h1">{TITLE[S.route]}</h1>
-      </div>
-      <div className="top-right">
+      <div className="crumbs">
         {S.devices.length ? (
-          <div className="top-dev">
-            <Dot level={S.online ? "on" : ""} label={S.online ? "onlayn" : "oflayn"} />
+          <span className="crumb-dev">
+            <Dot level={S.online ? "on" : ""} label={state} />
             {S.devices.length > 1 ? (
               <Select label="Qurilma" value={S.devId} options={S.devices.map((x) => [x.id, x.name] as [string, string])} onChange={A.device} className="dev-sel" />
             ) : <span className="dev-name ellipsis">{d ? d.name : ""}</span>}
-            <span className="top-state t-sub">{S.online ? (L && L.locked ? "qulflangan" : "onlayn") : "oflayn"}</span>
-          </div>
-        ) : null}
-        {S.route !== "settings" ? <Button className="mob-only" variant="ghost" icon="sliders" label="Sozlamalar" href="#/settings" /> : null}
+          </span>
+        ) : <span className="dev-name">PC Pulse</span>}
+        <span className="crumb-sep" aria-hidden="true">/</span>
+        <span className="crumb-cur ellipsis">{TITLE[S.route]}</span>
+        <span className="grow" />
+        {S.route !== "settings" ? <Button className="mob-only" variant="ghost" size="s" icon="sliders" label="Sozlamalar" href="#/settings" /> : null}
+      </div>
+      <div className="top-title">
+        <h1 className="t-h1">{ov && name ? `Xush kelibsiz, ${name.charAt(0).toUpperCase()}${name.slice(1)}` : TITLE[S.route]}</h1>
+        {sub ? <p className="top-sub">{sub}</p> : null}
       </div>
     </header>
   );
