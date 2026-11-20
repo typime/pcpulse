@@ -1119,6 +1119,91 @@ def task_exists() -> bool:
 
 def remove_autostart() -> None:
     ps_run(f"Unregister-ScheduledTask -TaskName '{TASK_NAME}' -Confirm:$false -ErrorAction SilentlyContinue")
+    remove_shortcuts()
+
+
+SHORTCUT_NAME = "PC Pulse.lnk"
+
+
+def install_shortcuts(exe: str) -> None:
+    """Start menyusi va ish stolida “PC Pulse” yorligʻi — bosilganda PC Pulse oʻz oynasida ochiladi."""
+    if not IS_WIN:
+        return
+    script = f"""
+$ErrorActionPreference = 'Stop'
+$w = New-Object -ComObject WScript.Shell
+foreach ($dir in @([Environment]::GetFolderPath('Programs'), [Environment]::GetFolderPath('Desktop'))) {{
+  if (-not $dir) {{ continue }}
+  $l = $w.CreateShortcut((Join-Path $dir '{SHORTCUT_NAME}'))
+  $l.TargetPath = '{_psq(exe)}'
+  $l.Arguments = '--window'
+  $l.WorkingDirectory = '{_psq(os.path.dirname(exe))}'
+  $l.IconLocation = '{_psq(exe)},0'
+  $l.Description = 'PC Pulse — kompyuter holati va boshqaruv'
+  $l.Save()
+}}
+"""
+    try:
+        code, out = ps_run(script)
+        if code:
+            log.warning("yorliq yaratilmadi: %s", out[:300])
+    except Exception as e:  # noqa: BLE001
+        log.warning("yorliq yaratilmadi: %s", e)
+
+
+def remove_shortcuts() -> None:
+    if IS_WIN:
+        ps_run(f"foreach ($d in @([Environment]::GetFolderPath('Programs'), [Environment]::GetFolderPath('Desktop'))) "
+               f"{{ Remove-Item -LiteralPath (Join-Path $d '{SHORTCUT_NAME}') -ErrorAction SilentlyContinue }}")
+
+
+def relaunch_elevated() -> bool:
+    """Oʻzini administrator sifatida qayta ishga tushiradi (Windows UAC soʻraydi). Muvaffaqiyatli boʻlsa True."""
+    import ctypes
+
+    args = [a for a in sys.argv[1:] if a != "--elevated"] + ["--elevated"]
+    exe = sys.executable if FROZEN else sys.executable
+    params = subprocess.list2cmdline(args if FROZEN else [os.path.abspath(__file__)] + args)
+    r = ctypes.windll.shell32.ShellExecuteW(None, "runas", exe, params, None, 1)
+    return int(r) > 32
+
+
+def ensure_admin(why: str) -> bool:
+    """Administrator boʻlsak True. Aks holda UAC orqali qayta ishga tushamiz va False qaytaramiz (bu jarayon chiqadi)."""
+    if not IS_WIN or winapi.is_admin():
+        return True
+    if "--elevated" in sys.argv:  # allaqachon soʻralgan, lekin huquq berilmadi
+        return False
+    if not relaunch_elevated():
+        import gui
+
+        if gui.available():
+            gui.info("PC Pulse", f"{why} uchun administrator ruxsati kerak.\nPCPulseAgent.exe ni qayta ishga tushirib, Windows soʻraganda “Ha” ni bosing.")
+    return False
+
+
+def spawn_window() -> None:
+    """PC Pulse oynasini alohida jarayonda ochadi."""
+    exe = INSTALLED_EXE if FROZEN and os.path.exists(INSTALLED_EXE) else sys.executable
+    args = [exe, "--window"] if FROZEN else [sys.executable, os.path.abspath(__file__), "--window"]
+    try:
+        subprocess.Popen(args, creationflags=0x00000008 | 0x00000200 if IS_WIN else 0, close_fds=True)
+    except OSError as e:
+        log.warning("oyna ochilmadi: %s", e)
+
+
+def open_app_window() -> int:
+    import window
+
+    if IS_WIN and FROZEN and os.path.exists(INSTALLED_EXE) and task_exists():
+        probe = bind_lock()
+        if probe is not None:  # agent fonda ishlamayapti — ishga tushirishga urinamiz (huquq yetmasa, jim oʻtamiz)
+            probe.close()
+            try:
+                start_task()
+            except Exception:  # noqa: BLE001
+                pass
+    return window.open_window(DATA_DIR)
 
 
 def read_json(path: str) -> dict:
@@ -1278,6 +1363,7 @@ def apply_update(stop_running: bool = False, no_start: bool = False) -> tuple[bo
         return True, ""
     if not task_exists():
         install_autostart(INSTALLED_EXE)
+    install_shortcuts(INSTALLED_EXE)  # 2.2 dan yangilanganlarda ham oyna yorligʻi paydo boʻlsin
     if start_agent(expect=VERSION):
         write_json(UPDATE_STATE, {**state, "ok": True})
         log.info("yangilandi: %s", VERSION)
@@ -1336,6 +1422,7 @@ def install_and_start() -> tuple[bool, str]:
     ok, out = install_autostart(target)
     if not ok:
         return False, out
+    install_shortcuts(target)
     return start_task(), ""
 
 
@@ -1359,9 +1446,7 @@ def manage_flow(cfg: dict | None) -> None:
     can_update = FROZEN and os.path.normcase(os.path.abspath(sys.executable)) != os.path.normcase(INSTALLED_EXE)
     action = gui.manage_window(cfg.get("name", ""), cfg.get("username", ""), cloud.WEB_URL, can_update)
     if action == "open":
-        import webbrowser
-
-        webbrowser.open(cloud.WEB_URL)
+        spawn_window()
     elif action == "repair":
         stop_other_instances()
         res = gui.setup_window(lambda u, p, n: do_pair(load_config(), u, p, n), cfg.get("name") or socket.gethostname(),
@@ -1403,6 +1488,15 @@ def manual_update_flow() -> None:
                              "Bundan keyingi yangilanishlar avtomatik oʻrnatiladi — bu faylni qayta yuklab olish shart emas.")
     else:
         gui.info("PC Pulse", f"Yangilab boʻlmadi: {msg}\n\nKompyuterni qayta ishga tushirib, faylni yana bir bor ishga tushirib koʻring.")
+
+
+def _webview_ver() -> str:
+    try:
+        import webview
+
+        return str(getattr(webview, "__version__", "ok"))
+    except Exception as e:  # noqa: BLE001
+        return f"yoʻq: {e!r}"[:160]
 
 
 def check_update_cli(path: str) -> int:
@@ -1448,7 +1542,7 @@ def selftest(path: str) -> int:
     import platform
     import traceback
 
-    res: dict = {"pawnio_installer": tools.pawnio_installer(), "pawnio_installed": tools.pawnio_installed(), "version": VERSION, "update_url": cloud.UPDATE_URL, "frozen": FROZEN, "python": platform.python_version(), "lhm_dir": LHM_DIR, "admin": winapi.is_admin()}
+    res: dict = {"pawnio_installer": tools.pawnio_installer(), "pawnio_installed": tools.pawnio_installed(), "version": VERSION, "update_url": cloud.UPDATE_URL, "frozen": FROZEN, "webview": _webview_ver(), "python": platform.python_version(), "lhm_dir": LHM_DIR, "admin": winapi.is_admin()}
     try:
         res["lhm_files"] = sorted(os.listdir(LHM_DIR))[:40]
     except Exception as e:
@@ -1528,6 +1622,11 @@ def main():
     ap.add_argument("--no-start", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--check-update", metavar="JSON", help=argparse.SUPPRESS)
     ap.add_argument("--test-handoff", metavar="EXE", help=argparse.SUPPRESS)  # CI: eski agent yangilovchini ishga tushirib chiqib ketishi
+    ap.add_argument("--window", action="store_true", help="PC Pulse oynasini ochish")
+    ap.add_argument("--manage", action="store_true", help="agent boshqaruv menyusi")
+    ap.add_argument("--window-test", metavar="JSON", help=argparse.SUPPRESS)
+    ap.add_argument("--window-url", help=argparse.SUPPRESS)
+    ap.add_argument("--elevated", action="store_true", help=argparse.SUPPRESS)
     args, _ = ap.parse_known_args()
     if sys.stdout and hasattr(sys.stdout, "reconfigure"):
         try:
@@ -1541,7 +1640,13 @@ def main():
         sys.exit(selftest(args.selftest))
     if args.check_update:
         sys.exit(check_update_cli(args.check_update))
+    if args.window_test:
+        import window
+
+        sys.exit(window.window_test(args.window_test, args.window_url))
     setup_logging(args.debug)
+    if args.window:
+        sys.exit(open_app_window())
     if args.test_handoff:
         subprocess.Popen([args.test_handoff, "--apply-update"], creationflags=0x00000008 | 0x00000200 if IS_WIN else 0,
                          close_fds=True, cwd=os.path.dirname(os.path.abspath(args.test_handoff)))
@@ -1566,21 +1671,35 @@ def main():
             lock = bind_lock()
             if lock:
                 break
-    if lock is None:  # boshqa nusxa allaqachon ishlayapti
-        if FROZEN and same_path(sys.executable, INSTALLED_EXE):  # vazifa rejalashtiruvchisi ikkinchi marta ishga tushirdi
-            log.info("agent allaqachon ishlayapti — chiqamiz")
-            return
+    if lock is None:  # agent fonda allaqachon ishlayapti
+        if FROZEN and same_path(sys.executable, INSTALLED_EXE) and not args.manage:
+            if IS_WIN and winapi.is_admin() and not args.elevated:  # vazifa rejalashtiruvchisi ikkinchi marta ishga tushirdi
+                log.info("agent allaqachon ishlayapti — chiqamiz")
+                return
+            sys.exit(open_app_window())  # foydalanuvchi oʻrnatilgan exe ni ochdi — oynani koʻrsatamiz
         if gui.available() and newer_than_installed():  # yangi exe ni yuklab ishga tushirishdi — soʻramasdan yangilaymiz
-            manual_update_flow()
+            if ensure_admin("Yangilash"):
+                manual_update_flow()
+                spawn_window()
+        elif args.manage:
+            if ensure_admin("Agentni boshqarish"):
+                manage_flow(cfg)
         elif gui.available():
-            manage_flow(cfg)
+            sys.exit(open_app_window())
         else:
             log.error("Agent allaqachon ishlayapti.")
+        return
+
+    if IS_WIN and FROZEN and not winapi.is_admin():
+        # agent fonda ishlamayapti: oʻrnatish, yangilash yoki ishga tushirish uchun administrator huquqi kerak
+        lock.close()
+        ensure_admin("PC Pulse agentini ishga tushirish")
         return
 
     if cfg and cfg.get("token") and not args.setup and gui.available() and newer_than_installed():
         lock.close()  # eski agent hozir ishlamayapti, lekin oʻrnatilgan — uni shu yangi fayl bilan almashtiramiz
         manual_update_flow()
+        spawn_window()
         return
     mark_running()
     if args.setup or not cfg or not cfg.get("token"):
@@ -1605,7 +1724,9 @@ def main():
                 ok, msg = install_and_start()
                 if ok:
                     gui.info("PC Pulse", "Tayyor! Agent fon rejimida ishlayapti va Windows bilan birga avtomatik ishga tushadi.\n\n"
-                                         "Telefoningizda saytni oching — kompyuteringiz u yerda koʻrinadi.")
+                                         "PC Pulse hozir oʻz oynasida ochiladi. Keyin uni Start menyusi yoki ish stolidagi “PC Pulse” yorligʻidan oching; "
+                                         "telefonda esa saytga shu akkaunt bilan kiring.")
+                    spawn_window()
                     return
                 log.warning("Avtomatik ishga tushirish oʻrnatilmadi: %s", msg)
                 gui.info("PC Pulse", f"Avtomatik ishga tushirishni oʻrnatib boʻlmadi:\n{msg[:300]}\n\nAgent hozircha shu oynasiz rejimda ishlaydi.")

@@ -64,10 +64,11 @@ jobs:
       - name: PCPulseAgent.exe ni yigʻish
         working-directory: agent
         run: >
-          pyinstaller --noconfirm --clean --onefile --windowed --uac-admin
+          pyinstaller --noconfirm --clean --onefile --windowed
           --name PCPulseAgent --icon assets/icon.ico
           --add-data "lhm;lhm" --add-data "pawnio;pawnio" --add-data "assets;assets"
           --collect-all pythonnet --collect-all clr_loader --hidden-import clr
+          --collect-all webview --hidden-import window
           agent.py
 
       - name: Oʻz-oʻzini tekshirish
@@ -80,6 +81,21 @@ jobs:
           if ($p.ExitCode -ne 0) { exit 1 }
           $st = Get-Content selftest.json -Raw | ConvertFrom-Json
           if ($st.version -ne $env:AGENT_VERSION) { Write-Error "Versiya $($st.version) != $env:AGENT_VERSION"; exit 1 }
+          if ("$($st.webview)" -like "yoʻq*") { Write-Error "pywebview exe ichida yoʻq: $($st.webview)"; exit 1 }
+
+      - name: Kompyuter oynasini sinash (WebView2)
+        shell: pwsh
+        working-directory: agent
+        timeout-minutes: 6
+        run: |
+          $rt = Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}' -ErrorAction SilentlyContinue
+          Write-Host "WebView2 runtime: $($rt.pv)"
+          $p = Start-Process -FilePath dist\PCPulseAgent.exe -ArgumentList '--window-test', "$PWD\window_test.json" -PassThru
+          $null = $p.Handle
+          if (-not $p.WaitForExit(240000)) { Stop-Process -Id $p.Id -Force; Write-Error "oyna sinovi tugamadi" }
+          Get-Content window_test.json -ErrorAction SilentlyContinue
+          Write-Host "exit code: $($p.ExitCode)"
+          if ($p.ExitCode -ne 0) { exit 1 }
 
       - name: PawnIO jim oʻrnatilishini sinash
         shell: pwsh
@@ -185,6 +201,7 @@ jobs:
             agent/dist/PCPulseAgent.exe
             agent/dist/latest.json
             agent/selftest.json
+            agent/window_test.json
             agent/update_test.json
 
       - name: Reliz
@@ -197,6 +214,7 @@ jobs:
             agent/dist/PCPulseAgent.exe
             agent/dist/latest.json
             agent/update_test.json
+            agent/window_test.json
             agent/selftest.json
             agent/pawnio_test.json
             agent/selftest_after_pawnio.json
@@ -207,6 +225,9 @@ jobs:
             2. SmartScreen chiqsa: “More info” → “Run anyway” (dastur imzolanmagan).
             3. Saytdagi username va parol bilan kiring — tamom.
             4. Harorat sensorlari uchun PawnIO drayveri agent tomonidan avtomatik oʻrnatiladi.
+
+            PCPulseAgent.exe ni (yoki Start menyusi / ish stolidagi “PC Pulse” yorligʻini) ochsangiz, PC Pulse brauzersiz, oʻz oynasida ochiladi.
+            Administrator ruxsati faqat oʻrnatish va yangilashda soʻraladi.
 
             Agent 2.2 va undan yangilari oʻzini avtomatik yangilaydi (6 soatda bir tekshiradi; saytdan “Hozir yangilash” ham mumkin).
             2.0 yoki 2.1 oʻrnatilgan boʻlsa: shu faylni bir marta ishga tushiring — eskisini oʻzi almashtiradi.

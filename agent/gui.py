@@ -140,7 +140,7 @@ def manage_window(name: str, username: str, web_url: str, can_update: bool) -> s
         choice["v"] = v
         root.destroy()
 
-    items = [("open", "Saytni ochish", True), ("restart", "Agentni qayta ishga tushirish", False),
+    items = [("open", "PC Pulse oynasini ochish", True), ("restart", "Agentni qayta ishga tushirish", False),
              ("repair", "Qayta ulash (boshqa akkaunt)", False)]
     if can_update:
         items.append(("update", "Shu faylni oʻrnatish (yangilash)", False))
