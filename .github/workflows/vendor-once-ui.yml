@@ -2,23 +2,31 @@ name: Once UI CSS (vaqtinchalik)
 on:
   push:
     branches: [tools/once-ui]
+    paths: [.github/workflows/vendor-once-ui.yml]
+permissions:
+  contents: write
 jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: |
-          mkdir out && cd out
-          for p in @once-ui-system/core @once-ui-system/foundations; do
-            npm view $p version dist-tags --json > "$(echo $p | tr '/@' '__').json" || true
-            npm pack $p 2>/dev/null || true
+          rm -rf vendor-tmp && mkdir -p vendor-tmp && cd vendor-tmp
+          for p in @once-ui-system/foundations @once-ui-system/core; do
+            n=$(echo $p | tr '/@' '__')
+            npm view $p version dist-tags license --json > "$n.info.json" || true
+            f=$(npm pack $p 2>/dev/null | tail -1) || true
+            [ -n "$f" ] && mkdir -p "$n" && tar -xzf "$f" -C "$n" && rm "$f"
           done
-          ls -la
-          for t in *.tgz; do mkdir -p "x_${t%.tgz}" && tar -xzf "$t" -C "x_${t%.tgz}"; done
-          find . -name "*.css" -path "*css*" | head -50
-          find . -name "LICENSE*" | head
-      - uses: actions/upload-artifact@v4
-        with:
-          name: once-ui
-          path: out
+          # faqat CSS, tokens.json, litsenziya va package.json qoldiramiz
+          find . -type f ! \( -name "*.css" -o -name "tokens.json" -o -name "once-ui.tokens.json" -o -name "LICENSE*" -o -name "package.json" -o -name "*.info.json" \) -delete
+          find . -type d -empty -delete
+          find . -type f | sort
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add vendor-tmp
+          git commit -m "Once UI CSS (npm dan)" || echo "oʻzgarish yoʻq"
+          git push
